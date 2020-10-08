@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 import sys, os, glob, re
 from scipy.interpolate import griddata
+import scipy.ndimage
 
 def station_map (dict_cruise_pos, topo_ary):
     '''
@@ -103,22 +104,21 @@ def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec, value_ar
 
         lon, lat = np.meshgrid(np.linspace(np.min(y), np.max(y), 100), np.linspace(np.min(x), np.max(x),100)) 
         topo = griddata((y, x), z, (lon, lat), method='cubic') 
-
         mask_ary = (lat >= value_of_transec+1) | (lat <= value_of_transec-1) # mask array give the value of transec
         topo_mask = np.ma.masked_array(topo, mask=mask_ary)
 
         lon_transec = lon[1,] # raw longitude
         topo_transec = np.ma.mean(topo_mask, axis=0) # raw topology of given transec
 
-        geo_range = lon_transec[(lon_transec >= range_transec[0]) & (lon_transec <= range_transec[1])] # set precise lon range
-        topo_range = topo_transec[(lon_transec >= range_transec[0]) & (lon_transec <= range_transec[1])] # set precise topo range
+        geo_range = lon_transec[(lon_transec >= range_transec[0]-1) & (lon_transec <= range_transec[1]+1)] # set precise lon range
+        topo_range = topo_transec[(lon_transec >= range_transec[0]-1) & (lon_transec <= range_transec[1]+1)] # set precise topo range
 
-        geo_mesh, depth_mesh = np.meshgrid( np.linspace(np.min(value_ary[2,:]), np.max(value_ary[2,:])),
-                                            np.linspace(np.min(value_ary[0,:]), np.max(value_ary[0,:])) ) # creat mesh grid of x(position) and y(depth)
-        print(geo_mesh)
-        print(depth_mesh)
-        z_value = griddata((value_ary[2,:], value_ary[0,:]), z, (geo_mesh, depth_mesh), method='cubic')
+        geo_mesh, depth_mesh = np.meshgrid( np.linspace(np.min(value_ary[:,1]), np.max(value_ary[:,1])),
+                                            np.linspace(np.min(value_ary[:,3]), np.max(value_ary[:,3])) ) # creat mesh grid of x(position) and y(depth)
 
+        z_value = griddata((value_ary[:,1], value_ary[:,3]), value_ary[:,2] , (geo_mesh, depth_mesh), method='linear')
+
+        print(z_value)
     elif lat_or_lon == 'lon':
         x = topo_ary[:,0] # lat
         y = topo_ary[:,1] # lon
@@ -136,17 +136,19 @@ def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec, value_ar
         geo_range = lat_transec[(lat_transec >= range_transec[0]) & (lat_transec <= range_transec[1])] # set precise lon range
         topo_range = topo_transec[(lat_transec >= range_transec[0]) & (lat_transec <= range_transec[1])] # set precise topo range
 
-        geo_mesh, depth_mesh = np.meshgrid( np.linspace(np.min(value_ary[1,:]), np.max(value_ary[1,:])),
-                                            np.linspace(np.min(value_ary[0,:]), np.max(value_ary[0,:])) ) # creat mesh grid of x(position) and y(depth)
+        geo_mesh, depth_mesh = np.meshgrid( np.linspace(np.min(value_ary[:,0]), np.max(value_ary[:,0])),
+                                            np.linspace(np.min(value_ary[:,3]), np.max(value_ary[:,3])) ) # creat mesh grid of x(position) and y(depth)
         
-        z_value = griddata((value_ary[1,:], value_ary[0,:]), z, (geo_mesh, depth_mesh), method='cubic')
+        z_value = griddata((value_ary[:,0], value_ary[:,3]), value_ary[:,2], (geo_mesh, depth_mesh))
 
 
     # plot topology data
+    plt.contourf(geo_mesh,depth_mesh, z_value, 1000, cmap = 'jet')
     plt.fill_between(geo_range, topo_range, np.min(topo_range)-100, color='black') # fill topology
     plt.xlim(*range_transec)
     plt.ylim(np.min(topo_range)-100, 0)
-    plt.contourf(depth_mesh, geo_mesh, z_value, cmap = 'jet')
+
+    
 
 
     plt.show()
@@ -169,10 +171,10 @@ if __name__ == "__main__":
         lon = list(pd.to_numeric(ctd_df_filter['Longitude']).values)
         z = list(pd.to_numeric(ctd_df_filter['Temp [°C]']).values)
 
-        ctd_array = np.array((depth, lat, lon, z)) # create array
+        ctd_array = np.array((lat, lon, z, depth)).transpose() # create array
 
         topo = bathy_data (75, 83, -30, 20)
-        contour_ver(topo, 'lat', 79, (-10, 10), ctd_array)
+        contour_ver(topo, 'lat', 79, (-5, 10), ctd_array)
 
         quit()
 
