@@ -90,10 +90,11 @@ def bathy_data (minlat, maxlat, minlon, maxlon):
     return topo
 
 
-def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec):
+def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec, value_ary):
     '''
     create contour plot with bathymetry data
     should type the paramter like this; contour_ver(topo, 'lat', 79, (-10, 10))
+    value array should be like: np.array = [[depth list], [lat list], [lon list], [z value]]
     '''
     if lat_or_lon == 'lat':
         x = topo_ary[:,0] # lat
@@ -112,6 +113,11 @@ def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec):
         geo_range = lon_transec[(lon_transec >= range_transec[0]) & (lon_transec <= range_transec[1])] # set precise lon range
         topo_range = topo_transec[(lon_transec >= range_transec[0]) & (lon_transec <= range_transec[1])] # set precise topo range
 
+        geo_mesh, depth_mesh = np.meshgrid( np.linspace(np.min(value_ary[2,:]), np.max(value_ary[2,:])),
+                                            np.linspace(np.min(value_ary[0,:]), np.max(value_ary[0,:])) ) # creat mesh grid of x(position) and y(depth)
+        print(geo_mesh)
+        print(depth_mesh)
+        z_value = griddata((value_ary[2,:], value_ary[0,:]), z, (geo_mesh, depth_mesh), method='cubic')
 
     elif lat_or_lon == 'lon':
         x = topo_ary[:,0] # lat
@@ -130,10 +136,21 @@ def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec):
         geo_range = lat_transec[(lat_transec >= range_transec[0]) & (lat_transec <= range_transec[1])] # set precise lon range
         topo_range = topo_transec[(lat_transec >= range_transec[0]) & (lat_transec <= range_transec[1])] # set precise topo range
 
+        geo_mesh, depth_mesh = np.meshgrid( np.linspace(np.min(value_ary[1,:]), np.max(value_ary[1,:])),
+                                            np.linspace(np.min(value_ary[0,:]), np.max(value_ary[0,:])) ) # creat mesh grid of x(position) and y(depth)
+        
+        z_value = griddata((value_ary[1,:], value_ary[0,:]), z, (geo_mesh, depth_mesh), method='cubic')
+
+
     # plot topology data
     plt.fill_between(geo_range, topo_range, np.min(topo_range)-100, color='black') # fill topology
     plt.xlim(*range_transec)
     plt.ylim(np.min(topo_range)-100, 0)
+    plt.contourf(depth_mesh, geo_mesh, z_value, cmap = 'jet')
+
+
+    plt.show()
+    plt.close()
 
 
 
@@ -144,9 +161,18 @@ def contour_hor ():
 if __name__ == "__main__":
 
         # create contour map
+        ctd_df = export_sql('ctd', 'ctd_meta')
+        ctd_df_filter = ctd_df.loc[(pd.to_numeric(ctd_df['Latitude']) >=78.5) & (pd.to_numeric(ctd_df['Latitude']) <=79.5)]
+
+        depth = [i*(-1) for i in list(pd.to_numeric(ctd_df_filter['Depth water [m]']).values)]
+        lat = list(pd.to_numeric(ctd_df_filter['Latitude']).values)
+        lon = list(pd.to_numeric(ctd_df_filter['Longitude']).values)
+        z = list(pd.to_numeric(ctd_df_filter['Temp [°C]']).values)
+
+        ctd_array = np.array((depth, lat, lon, z)) # create array
+
         topo = bathy_data (75, 83, -30, 20)
-        contour_ver(topo, 'lat', 79, (-10, 10))
-        #contour_ver(topo, 'lon', 3, (77, 81))
+        contour_ver(topo, 'lat', 79, (-10, 10), ctd_array)
 
         quit()
 
