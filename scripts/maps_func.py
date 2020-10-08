@@ -84,13 +84,11 @@ def bathy_data (minlat, maxlat, minlon, maxlon):
     import urllib.request as urllib2
     response = urllib2.urlopen('http://coastwatch.pfeg.noaa.gov/erddap/griddap/usgsCeSrtm30v6.json?topo[(' \
                             +str(maxlat)+'):100:('+str(minlat)+')][('+str(minlon)+'):100:('+str(maxlon)+')]')
- 
     data = response.read()
     data_dic = json.loads(data.decode('utf-8'))
-
     topo = np.asarray(data_dic['table']['rows'])
-
     return topo
+
 
 
 if __name__ == "__main__":

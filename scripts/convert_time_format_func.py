@@ -67,3 +67,8 @@ def dec2dm_func(dms):
         return (int(abs(degree)) + dec_minute)
     elif degree < 0:
         return (-1)*(int(abs(degree)) + dec_minute)
+
+if __name__ == "__main__":
+    position = "79°01.884'N"
+    print(stbposition_dms2dec_func(position))
+    
