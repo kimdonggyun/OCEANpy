@@ -1,6 +1,6 @@
 # create maps
 from sql_func import export_sql, import_sql
-from isc_prcs_func import isc_prcs
+from isc_prcs_func import isc_xlsx
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.basemap import maskoceans
 # brew install geos
@@ -70,7 +70,7 @@ def station_map (dict_cruise_pos, topo_ary):
 
 
     # save the plot
-    os.chdir('/Users/dong/Library/Mobile Documents/com~apple~CloudDocs/Work/github/ISCpy/plots')
+    os.chdir('/Users/dong/Library/Mobile Documents/com~apple~CloudDocs/Work/github/OCEANpy/plots')
     fig_name = "ISC_station_map.pdf"
     plt.savefig(fig_name)
     plt.close()
@@ -90,14 +90,67 @@ def bathy_data (minlat, maxlat, minlon, maxlon):
     return topo
 
 
-def contour_ver ():
-    pass
+def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec):
+    '''
+    create contour plot with bathymetry data
+    should type the paramter like this; contour_ver(topo, 'lat', 79, (-10, 10))
+    '''
+    if lat_or_lon == 'lat':
+        x = topo_ary[:,0] # lat
+        y = topo_ary[:,1] # lon
+        z = topo_ary[:,2] # topo
+
+        lon, lat = np.meshgrid(np.linspace(np.min(y), np.max(y), 100), np.linspace(np.min(x), np.max(x),100)) 
+        topo = griddata((y, x), z, (lon, lat), method='cubic') 
+
+        mask_ary = (lat >= value_of_transec+1) | (lat <= value_of_transec-1) # mask array give the value of transec
+        topo_mask = np.ma.masked_array(topo, mask=mask_ary)
+
+        lon_transec = lon[1,] # raw longitude
+        topo_transec = np.ma.mean(topo_mask, axis=0) # raw topology of given transec
+
+        geo_range = lon_transec[(lon_transec >= range_transec[0]) & (lon_transec <= range_transec[1])] # set precise lon range
+        topo_range = topo_transec[(lon_transec >= range_transec[0]) & (lon_transec <= range_transec[1])] # set precise topo range
+
+
+    elif lat_or_lon == 'lon':
+        x = topo_ary[:,0] # lat
+        y = topo_ary[:,1] # lon
+        z = topo_ary[:,2] # topo
+
+        lon, lat = np.meshgrid(np.linspace(np.min(y), np.max(y), 100), np.linspace(np.min(x), np.max(x),100)) 
+        topo = griddata((y, x), z, (lon, lat), method='cubic') 
+
+        mask_ary = (lon >= value_of_transec+1) | (lon <= value_of_transec-1) # mask array give the value of transec
+        topo_mask = np.ma.masked_array(topo, mask=mask_ary)
+
+        lat_transec = lat[:,1] # raw latitude
+        topo_transec = np.ma.mean(topo_mask, axis=1) # raw topology of given transec
+
+        geo_range = lat_transec[(lat_transec >= range_transec[0]) & (lat_transec <= range_transec[1])] # set precise lon range
+        topo_range = topo_transec[(lat_transec >= range_transec[0]) & (lat_transec <= range_transec[1])] # set precise topo range
+
+    # plot topology data
+    plt.fill_between(geo_range, topo_range, np.min(topo_range)-100, color='black') # fill topology
+    plt.xlim(*range_transec)
+    plt.ylim(np.min(topo_range)-100, 0)
+
+
 
 def contour_hor ():
     pass
 
 
 if __name__ == "__main__":
+
+        # create contour map
+        topo = bathy_data (75, 83, -30, 20)
+        contour_ver(topo, 'lat', 79, (-10, 10))
+        #contour_ver(topo, 'lon', 3, (77, 81))
+
+        quit()
+
+        # create station maps
         isc_df = export_sql('isc', 'isc_meta')
         cruise_list = ('PS107', 'PS114', 'PS121')
         cruise_dict = {}
@@ -105,7 +158,7 @@ if __name__ == "__main__":
             cruise_df = isc_df[isc_df['cruise_station_haul'].str.contains(cruise)]
             cruise_dict[cruise] = (tuple(pd.to_numeric(cruise_df['lat'])) , tuple(pd.to_numeric(cruise_df['lon'])))
 
-        topo = bathy_data (75, 85, -30, 30) # -30, 30, 75, 85
+        topo = bathy_data (75, 83, -30, 20) # -30, 30, 75, 85
         station_map(cruise_dict, topo)
         
         quit()
@@ -132,7 +185,7 @@ if __name__ == "__main__":
             profile_num = re.findall('[0-9]+', Path(excel_file).name)[0]
             c_df = isc_prcs(excel_file)
             for station, item in station_dict.items():
-                if True in np.isnan(item): # ignore if nan vlaue in item(lat, lon, profile number)
+                if True in np.isnan(item): # ignore if nan value in item(lat, lon, profile number)
                     continue
                 elif (int(item[2]) == int(profile_num)):
                     contour_dict[(item[0], item[1])] = tuple(c_df['Depths (m)']), tuple(c_df['Temperature (dC)']) 
