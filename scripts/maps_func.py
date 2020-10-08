@@ -90,6 +90,12 @@ def bathy_data (minlat, maxlat, minlon, maxlon):
     return topo
 
 
+def contour_ver ():
+    pass
+
+def contour_hor ():
+    pass
+
 
 if __name__ == "__main__":
         isc_df = export_sql('isc', 'isc_meta')
