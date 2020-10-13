@@ -29,12 +29,12 @@ def vertical_plot (df, title):
     # 1st plot for temperature and salanity
     axs[0].plot(temp, depth, color='red', linewidth= 1, alpha=0.7)
     axs[0].set_ylabel(unit_dict['depth'], color ='black')
-    axs[0].set_xlabel(unit_dict['temp'], color = 'red')
+    axs[0].set_xlabel(unit_dict['sal'], color = 'red')
     axs[0].invert_yaxis()
 
     sec_axs = axs[0].twiny()
     sec_axs.plot(sal, depth, color ='blue', linewidth= 1, alpha=0.7)
-    sec_axs.set_xlabel(unit_dict['sal'], color = 'blue')
+    sec_axs.set_xlabel(unit_dict['temp'], color = 'blue')
 
     # 2nd plot for turbidity and Fluorescence
     axs[1].plot(turb, depth, color='red', linewidth= 1, alpha=0.7)
@@ -60,7 +60,6 @@ def vertical_plot (df, title):
     mid_min, mid_max = np.nanmin(median_esd), np.nanmax(median_esd) # find min and max values considering from both median and average ESD
     avg_min, avg_max = np.nanmin(average_esd), np.nanmax(average_esd)
     x_min, x_max = min(mid_min, avg_min), max(mid_max, avg_max)
-    print(x_min, x_max)
     axs[3].scatter(median_esd, depth, color='red', s= 2, alpha=0.7)
     axs[3].set_ylabel(unit_dict['depth'], color ='black')
     axs[3].set_xlabel(unit_dict['median_esd'], color = 'red')
@@ -108,30 +107,43 @@ def sum_up (df, list_size_spectra, min_size, max_size):
     return loc_number
 
 
-def isc_xlsx (file_name):
+def bin_interval (df, bin_size, max_depth):
+    # reforming dataframe with certain depth interval
+    df.dropna(axis=1, how='all', inplace=True) # drop columns having all nan
+    depth_range = range(0, int(max_depth+bin_size), bin_size) # set depth bin range
+    bin_df = pd.DataFrame() # create empty dataframe
+    for b in range(0, len(depth_range)-1):
+        each_df = df.loc[(depth_range[b] <= df['Depths (m)']) & (df['Depths (m)'] < depth_range[b+1])]
+        index_each_df = tuple(each_df.index)
+        index_up, index_down = index_each_df[0], index_each_df[-1]
+        bin_df[depth_range[b+1]] = df.loc[(depth_range[b] <= df['Depths (m)']) & (df['Depths (m)'] < depth_range[b+1])].sum(axis=0)/(index_down-index_up+1)
+
+    bin_df = bin_df.T
+    bin_df['Depths (m)'] = bin_df.index
+    bin_df.reset_index(drop=True, inplace=True) 
+    print(bin_df)
+
+def isc_xlsx (file_name, bin_size):
     '''
     this function read in processed ISC data and,
     return as organised data
     '''
     # 1. import xlsx file and seperate each sheets to seperate dataframe
     xl_file = pd.ExcelFile(file_name)
-    binned_all_df = pd.read_excel(xl_file, sheet_name='Binned_All_Images', header=2)
-    #vol_spec_df = pd.read_excel(xl_file, sheet_name='VolumeSpectraData', header=2)
-    #aggr_con_df = pd.read_excel(xl_file, sheet_name='AggregateConcentration', header=2)
-    #size_spec_df = pd.read_excel(xl_file, sheet_name='SizeSpectraData', header=2)
-    ctd_df = pd.read_excel(xl_file, sheet_name='CTD-Data10', header=2)
 
-    # calculate minimum images per each bin to make each bin has at least more tha one count
-    size_spec_list = list(binned_all_df.columns)[2:]
-    min_size = 100
-    max_size = 300
-    #min_img = sum_up(binned_all_df, size_spec_list, min_size, max_size)
-    #print(file_name.split(os.sep)[-1], min_img)
+    ctd_df = pd.read_excel(xl_file, sheet_name='CTD-Data', header=2)
+    vol_spec_df = pd.read_excel(xl_file, sheet_name='VolumeSpectraData', header=2)
+    aggr_con_df = pd.read_excel(xl_file, sheet_name='AggregateConcentration', header=2)
+    size_spec_df = pd.read_excel(xl_file, sheet_name='SizeSpectraData', header=2)
 
+    # 2. reformaing dataframe with given bin_size interval
+    max_depth = ctd_df['Depths (m)'].max()
+    bin_interval (vol_spec_df, 10, max_depth)
     return ctd_df
 
 if __name__ == "__main__":
-    file_path = '/Users/dong/Library/Mobile Documents/com~apple~CloudDocs/Work/github/ISCpy'
-    for excel_file in glob.glob(file_path+os.sep+'data'+os.sep+'*.xlsx'):
-        ctd_df = isc_xlsx(excel_file)
-        vertical_plot(ctd_df, excel_file.split(os.sep)[-1].replace('.xlsx', ''))
+    file_path = '/Users/dong/Library/Mobile Documents/com~apple~CloudDocs/Work/github/OCEANpy'
+    for excel_file in glob.glob(file_path+os.sep+'data'+os.sep+'isc'+os.sep+'IR*.xlsx'):
+        ctd_df = isc_xlsx(excel_file, 10)
+        quit()
+        #vertical_plot(ctd_df, excel_file.split(os.sep)[-1].replace('.xlsx', ''))
