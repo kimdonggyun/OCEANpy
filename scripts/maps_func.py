@@ -5,6 +5,8 @@ from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.basemap import maskoceans
 # brew install geos
 # pip3 install https://github.com/matplotlib/basemap/archive/master.zip
+# for DIVA tools
+# https://github.com/gher-ulg/DivaPythonTools
 import matplotlib.pyplot as plt
 from pathlib import Path
 import pandas as pd
@@ -12,6 +14,10 @@ import numpy as np
 import sys, os, glob, re
 from scipy.interpolate import griddata
 import scipy.ndimage
+import matplotlib.tri as tri
+import math
+from time_info import day_night
+from datetime import datetime
 
 def station_map (dict_cruise_pos, topo_ary):
     '''
@@ -90,12 +96,11 @@ def bathy_data (minlat, maxlat, minlon, maxlon):
     topo = np.asarray(data_dic['table']['rows'])
     return topo
 
-
 def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec, value_ary):
     '''
     create contour plot with bathymetry data
     should type the paramter like this; contour_ver(topo, 'lat', 79, (-10, 10))
-    value array should be like: np.array = [[depth list], [lat list], [lon list], [z value]]
+    value array should be like: np.array = [[lat, lon, z value, depth]]
     '''
     if lat_or_lon == 'lat':
         x = topo_ary[:,0] # lat
@@ -103,56 +108,78 @@ def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec, value_ar
         z = topo_ary[:,2] # topo
 
         lon, lat = np.meshgrid(np.linspace(np.min(y), np.max(y), 100), np.linspace(np.min(x), np.max(x),100)) 
-        topo = griddata((y, x), z, (lon, lat), method='cubic') 
+        topo = griddata((y, x), z, (lon, lat), method='linear') 
         mask_ary = (lat >= value_of_transec+1) | (lat <= value_of_transec-1) # mask array give the value of transec
         topo_mask = np.ma.masked_array(topo, mask=mask_ary)
 
         lon_transec = lon[1,] # raw longitude
         topo_transec = np.ma.mean(topo_mask, axis=0) # raw topology of given transec
 
-        geo_range = lon_transec[(lon_transec >= range_transec[0]-1) & (lon_transec <= range_transec[1]+1)] # set precise lon range
-        topo_range = topo_transec[(lon_transec >= range_transec[0]-1) & (lon_transec <= range_transec[1]+1)] # set precise topo range
+        geo_range = lon_transec[(lon_transec >= range_transec[0]-0.5) & (lon_transec <= range_transec[1]+0.5)] # set precise lon range
+        topo_range = topo_transec[(lon_transec >= range_transec[0]-0.5) & (lon_transec <= range_transec[1]+0.5)] # set precise topo range
 
-        geo_mesh, depth_mesh = np.meshgrid( np.linspace(np.min(value_ary[:,1]), np.max(value_ary[:,1])),
-                                            np.linspace(np.min(value_ary[:,3]), np.max(value_ary[:,3])) ) # creat mesh grid of x(position) and y(depth)
+
+        # for contour
+        # plt.tricontourf(value_ary[:,3], value_ary[:,1], value_ary[:,2], 2000, cmap='jet')
+ 
+        geo_mesh, depth_mesh = np.meshgrid( np.linspace(np.min(geo_range), np.max(geo_range), int((np.max(geo_range)- np.min(geo_range))*10) ),
+                                            np.linspace(np.min(topo_range), 0, int(np.abs(np.min(topo_range))) ) ) # creat mesh grid of x(position) and y(depth)
 
         z_value = griddata((value_ary[:,1], value_ary[:,3]), value_ary[:,2] , (geo_mesh, depth_mesh), method='linear')
 
-        print(z_value)
+        removenan = np.isnan(z_value) # remove nan vlaue in z value and apply this to x and y parameter
+        geo_mesh = np.ma.masked_array(geo_mesh, removenan)
+        depth_mesh = np.ma.masked_array(depth_mesh, removenan)
+        z_value = np.ma.masked_array(z_value, removenan)
+        
+
     elif lat_or_lon == 'lon':
         x = topo_ary[:,0] # lat
         y = topo_ary[:,1] # lon
         z = topo_ary[:,2] # topo
 
         lon, lat = np.meshgrid(np.linspace(np.min(y), np.max(y), 100), np.linspace(np.min(x), np.max(x),100)) 
-        topo = griddata((y, x), z, (lon, lat), method='cubic') 
-
+        topo = griddata((y, x), z, (lon, lat), method='linear') 
         mask_ary = (lon >= value_of_transec+1) | (lon <= value_of_transec-1) # mask array give the value of transec
         topo_mask = np.ma.masked_array(topo, mask=mask_ary)
 
-        lat_transec = lat[:,1] # raw latitude
-        topo_transec = np.ma.mean(topo_mask, axis=1) # raw topology of given transec
+        lat_transec = lat[1,] # raw longitude
+        topo_transec = np.ma.mean(topo_mask, axis=0) # raw topology of given transec
 
-        geo_range = lat_transec[(lat_transec >= range_transec[0]) & (lat_transec <= range_transec[1])] # set precise lon range
-        topo_range = topo_transec[(lat_transec >= range_transec[0]) & (lat_transec <= range_transec[1])] # set precise topo range
-
-        geo_mesh, depth_mesh = np.meshgrid( np.linspace(np.min(value_ary[:,0]), np.max(value_ary[:,0])),
-                                            np.linspace(np.min(value_ary[:,3]), np.max(value_ary[:,3])) ) # creat mesh grid of x(position) and y(depth)
-        
-        z_value = griddata((value_ary[:,0], value_ary[:,3]), value_ary[:,2], (geo_mesh, depth_mesh))
+        geo_range = lat_transec[(lat_transec >= range_transec[0]-0.5) & (lat_transec <= range_transec[1]+0.5)] # set precise lon range
+        topo_range = topo_transec[(lat_transec >= range_transec[0]-0.5) & (lat_transec <= range_transec[1]+0.5)] # set precise topo range
 
 
-    # plot topology data
-    plt.contourf(geo_mesh,depth_mesh, z_value, 1000, cmap = 'jet')
+        # for contour
+        geo_mesh, depth_mesh = np.meshgrid( np.linspace(np.min(geo_range), np.max(geo_range), int((np.max(geo_range)- np.min(geo_range))*10) ),
+                                            np.linspace(np.min(topo_range), 0, int(np.abs(np.min(topo_range))) ) ) # creat mesh grid of x(position) and y(depth)
+
+        z_value = griddata((value_ary[:,1], value_ary[:,3]), value_ary[:,2] , (geo_mesh, depth_mesh), method='linear')
+
+
+    # create plot and add data
+    plt.figure(figsize=(10, 8))
+    #cntr = plt.imshow(z_value, aspect='auto', origin='lower', cmap ='jet', extent=[np.min(geo_range), np.max(geo_range), np.min(topo_range), 0 ]) # same but other method to contour
+    cntr = plt.contourf(geo_mesh,depth_mesh, z_value, levels=1000, cmap = 'jet')
+
+    #plt.scatter(list(value_ary[:,1]), list(value_ary[:,3]), c = list(value_ary[:,2]), s=10, cmap='jet')
     plt.fill_between(geo_range, topo_range, np.min(topo_range)-100, color='black') # fill topology
-    plt.xlim(*range_transec)
-    plt.ylim(np.min(topo_range)-100, 0)
-
     
+    # addtional for plot
+    plt.xlim(*range_transec)
+    plt.ylim(np.min(depth_mesh)-50, 0)
+    plt.xlabel('degree $^\circ$')
+    plt.ylabel('depth [m]')
+    cbar = plt.colorbar(cntr, ticks = range(math.floor(np.nanmin(z_value)), math.ceil(np.nanmax(z_value)), 1)) # draw colorbar
+    cbar.ax.set_ylabel('Temp [dC]', rotation=270, labelpad=10)  # Fluorescence [mg m$^{-3}$]
+    plt.title('PS107')
 
+    # save plot
+    path_to_save = '/Users/dong/Library/Mobile Documents/com~apple~CloudDocs/Work/github/OCEANpy/plots'
+    file_name = 'day = temp_'+lat_or_lon+'_contour_ver_'+ str(value_of_transec) +str(range_transec)+'.png'
 
-    plt.show()
-    plt.close()
+    plt.savefig(os.path.join(path_to_save, file_name))    
+
 
 
 
@@ -164,8 +191,14 @@ if __name__ == "__main__":
 
         # create contour map
         ctd_df = export_sql('ctd', 'ctd_meta')
-        ctd_df_filter = ctd_df.loc[(pd.to_numeric(ctd_df['Latitude']) >=78.5) & (pd.to_numeric(ctd_df['Latitude']) <=79.5)]
+        ctd_df_filter = ctd_df.loc[(pd.to_numeric(ctd_df['Latitude']) >=78.9) & (pd.to_numeric(ctd_df['Latitude']) <=79.1)]
+        ctd_df_filter = ctd_df.loc[(pd.to_numeric(ctd_df['Depth water [m]']) <=500)]
+        ctd_df_filter = ctd_df_filter.dropna() # drop rows having empty value (empty values will affect contouring method)
 
+        ctd_df_filter['d_n'] = ctd_df_filter.apply(lambda row: day_night(float(row['Latitude']), float(row['Longitude']), datetime.strptime(row['Date/Time'], '%Y-%m-%dT%H:%M')), axis=1 )
+        ctd_df_filter = ctd_df_filter.loc[ctd_df_filter['d_n'] == 'day']
+
+        print(list(ctd_df))
         depth = [i*(-1) for i in list(pd.to_numeric(ctd_df_filter['Depth water [m]']).values)]
         lat = list(pd.to_numeric(ctd_df_filter['Latitude']).values)
         lon = list(pd.to_numeric(ctd_df_filter['Longitude']).values)
@@ -175,7 +208,7 @@ if __name__ == "__main__":
 
         topo = bathy_data (75, 83, -30, 20)
         contour_ver(topo, 'lat', 79, (-5, 10), ctd_array)
-
+        #contour_ver(topo, 'lon', 79, (-5, 10), ctd_array)
         quit()
 
         # create station maps
