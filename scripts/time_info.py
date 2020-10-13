@@ -105,6 +105,7 @@ def utc_to_local (latitude, longitude, datetime):
 
 def day_night(latitude, longitude, dt):
     # lat and lon = string, datetime = datetime object
+    # return day, night, dawn and dusk info, based on given lat, lon and time
     o = ephem.Observer()
     o.lat = str(latitude)
     o.lon = str(longitude)
