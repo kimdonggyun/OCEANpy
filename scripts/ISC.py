@@ -34,83 +34,119 @@ def sum_up (df, list_size_spectra, min_size, max_size):
     return loc_number
 
 
-def vertical_plot (ctd_df, value_df, title):
+def vertical_plot (ctd_df, vol_spec_df, aggr_con_df, title, particle_range):
+    # plot for ISC and CTD
+
+    # data preparation
+    # CTD
     depth = tuple(ctd_df['Depths (m)'])
     temp = tuple(ctd_df['Temperature (dC)'])
     sal = tuple(ctd_df['Salinity (PSU)'])
     turb = tuple(ctd_df['Turbidity (NTU)'])
     fluo = tuple(ctd_df['Fluorescence (mg/m3)'])
 
-    fig, axs = plt.subplots(2,2, figsize = (10, 10))
-    axs = axs.ravel()
-
     ctd_dict = {'depth': 'Depths (m)', 'temp': 'Temperature (dC)', 'sal': 'Salinity (PSU)', 'turb': 'Turbidity (NTU)',
-                    'fluo': 'Fluorescence (mg/m3)', 'aggr_vol': 'Total Aggregate Volume (ppm)', 'aggr_abund': 'Aggregate abundance (#/l)',
-                    'median_esd': 'Median ESD (µm)', 'average_esd':'Average ESD (µm)'}
+                    'fluo': 'Fluorescence (mg/m3)'}
+
+    # particle volume data
+    vol_sml = tuple(vol_spec_df[str(particle_range[0])+'-'+str(particle_range[1])])
+    vol_med = tuple(vol_spec_df[str(particle_range[1])+'-'+str(particle_range[2])])
+    vol_lrg = tuple(vol_spec_df[str(particle_range[2])+'-'+str(particle_range[3])])
+    vol_tol = tuple(np.array(vol_sml) + np.array(vol_med) + np.array(vol_lrg))
+
+    # particle abundance data
+    abd_sml = tuple(aggr_con_df[str(particle_range[0])+'-'+str(particle_range[1])])
+    abd_med = tuple(aggr_con_df[str(particle_range[1])+'-'+str(particle_range[2])])
+    abd_lrg = tuple(aggr_con_df[str(particle_range[2])+'-'+str(particle_range[3])])
+    abd_tol = tuple(np.array(abd_sml) + np.array(abd_med) + np.array(abd_lrg))
+
+    ##########
+    # plotting 
+    fig, axs = plt.subplots(2,3, figsize = (8, 10))
+    axs = axs.ravel()
 
     # 1st plot for temperature and salanity / data from ISC CTD
     axs[0].plot(temp, depth, color='red', linewidth= 1, alpha=0.7)
     axs[0].set_ylabel(ctd_dict['depth'], color ='black')
-    axs[0].set_xlabel(ctd_dict['sal'], color = 'red')
+    axs[0].set_xlabel(ctd_dict['temp'], color = 'red')
+    axs[0].set_xlim(-3, 9)
+    axs[0].set_ylim(0,1000)
     axs[0].invert_yaxis()
+
 
     sec_axs = axs[0].twiny()
     sec_axs.plot(sal, depth, color ='blue', linewidth= 1, alpha=0.7)
-    sec_axs.set_xlabel(ctd_dict['temp'], color = 'blue')
+    sec_axs.set_xlabel(ctd_dict['sal'], color = 'blue')
+    sec_axs.set_xlim(30, 36)
 
     # 2nd plot for turbidity and Fluorescence / data from ISC CTD
-    axs[1].plot(turb, depth, color='red', linewidth= 1, alpha=0.7)
-    axs[1].set_ylabel(ctd_dict['depth'], color ='black')
-    axs[1].set_xlabel(ctd_dict['turb'], color = 'red')
+    axs[3].plot(turb, depth, color='red', linewidth= 1, alpha=0.7)
+    axs[3].set_ylabel(ctd_dict['depth'], color ='black')
+    axs[3].set_xlabel(ctd_dict['turb'], color = 'red')
+    axs[3].set_xlim(-0.5, 6)
+    axs[3].set_ylim(0,1000)
+    axs[3].invert_yaxis()
+
+
+    sec_axs = axs[3].twiny()
+    sec_axs.plot(fluo, depth, color ='blue', linewidth= 1, alpha=0.7)
+    sec_axs.set_xlabel(ctd_dict['fluo'], color = 'blue')
+    sec_axs.set_xlim(-0.5, 6)
+
+    # 3rd plot for Total Aggregate Volume and Aggregate abundance
+    axs[1].plot(vol_sml, depth, color='red', linewidth= 1, alpha=0.7)
+    axs[1].set_xlabel('vol 0.15-0.5 [mm]', color = 'red')
+    axs[1].set_ylim(0,1000)
     axs[1].invert_yaxis()
 
     sec_axs = axs[1].twiny()
-    sec_axs.plot(fluo, depth, color ='blue', linewidth= 1, alpha=0.7)
-    sec_axs.set_xlabel(ctd_dict['fluo'], color = 'blue')
+    sec_axs.plot(vol_med, depth, color ='blue', linewidth= 1, alpha=0.7)
+    sec_axs.set_xlabel('vol 0.5-1 [mm]', color = 'blue')
 
-    # 3rd plot for Total Aggregate Volume and Aggregate abundance
-    axs[2].plot(aggr_vol, depth, color='red', linewidth= 1, alpha=0.7)
-    axs[2].set_ylabel(ctd_dict['depth'], color ='black')
-    axs[2].set_xlabel(ctd_dict['aggr_vol'], color = 'red')
+    # 4th plot for vol_median ESD and Average ESD
+    axs[4].plot(vol_lrg, depth, color='red', linewidth= 1, alpha=0.7)
+    axs[4].set_xlabel('vol 1 [mm] > ', color = 'red')
+    axs[4].set_ylim(0,1000)
+    axs[4].invert_yaxis()
+
+    sec_axs = axs[4].twiny()
+    sec_axs.plot(vol_tol, depth, color ='blue', linewidth= 1, alpha=0.7)
+    sec_axs.set_xlabel('vol total (0.15 [mm] > )', color = 'blue')
+
+    # 5th plot for Total Aggregate Volume and Aggregate abundance
+    axs[2].plot(abd_sml, depth, color='red', linewidth= 1, alpha=0.7)
+    axs[2].set_xlabel('abd 0.15-0.5 [mm]', color = 'red')
+    axs[2].set_ylim(0,1000)
     axs[2].invert_yaxis()
 
     sec_axs = axs[2].twiny()
-    sec_axs.plot(aggr_abund, depth, color ='blue', linewidth= 1, alpha=0.7)
-    sec_axs.set_xlabel(ctd_dict['aggr_abund'], color = 'blue')
+    sec_axs.plot(abd_med, depth, color ='blue', linewidth= 1, alpha=0.7)
+    sec_axs.set_xlabel('abd 0.5-1 [mm]', color = 'blue')
 
-    # 4th plot for Median ESD and Average ESD
-    mid_min, mid_max = np.nanmin(median_esd), np.nanmax(median_esd) # find min and max values considering from both median and average ESD
-    avg_min, avg_max = np.nanmin(average_esd), np.nanmax(average_esd)
-    x_min, x_max = min(mid_min, avg_min), max(mid_max, avg_max)
-    axs[3].scatter(median_esd, depth, color='red', s= 2, alpha=0.7)
-    axs[3].set_ylabel(ctd_dict['depth'], color ='black')
-    axs[3].set_xlabel(ctd_dict['median_esd'], color = 'red')
-    axs[3].invert_yaxis()
-    axs[3].set_xlim(x_min, x_max)
+    # 6th plot for vol_median ESD and Average ESD
+    axs[5].plot(abd_lrg, depth, color='red', linewidth= 1, alpha=0.7)
+    axs[5].set_xlabel('abd 1 [mm] > ', color = 'red')
+    axs[5].set_ylim(0,1000)
+    axs[5].invert_yaxis()
 
-    sec_axs = axs[3].twiny()
-    sec_axs.scatter(average_esd, depth, color ='blue', s=2, alpha=0.7)
-    sec_axs.set_xlabel(ctd_dict['average_esd'], color = 'blue')
-    sec_axs.set_xlim(x_min, x_max)
+    sec_axs = axs[5].twiny()
+    sec_axs.plot(abd_tol, depth, color ='blue', linewidth= 1, alpha=0.7)
+    sec_axs.set_xlabel('abd total (0.15 [mm] > )', color = 'blue')
 
 
     # addtional plot modification
-    fig.tight_layout(pad=3) # adjust layout of subplots
+    fig.tight_layout(pad=3, h_pad=1, w_pad=1) # adjust layout of subplots
     plt.suptitle(title, y = 0.99) # main title
 
-    plt.show()
-    plt.close()
-    quit()
-    os.chdir('/Users/dong/Library/Mobile Documents/com~apple~CloudDocs/Work/github/ISCpy/plots')
-    fig_name = str('CTD10_'+title+'.pdf')
+    os.chdir('/Users/dong/Library/Mobile Documents/com~apple~CloudDocs/Work/github/OCEANpy/plots')
+    fig_name = str('abd_vol_'+title+'.png')
     plt.savefig(fig_name)
     plt.close()
-
 
 def depth_bin_interval (df, depth_bin_size, max_depth):
     # reforming dataframe with certain depth interval
 
-    # 1. drop unnecessary columns
+    # 1. drop unnecessary columns and modify error values (e.g. - value to 0)
     df.dropna(axis=1, how='all', inplace=True) # drop columns having all nan
     for c in df.columns:
         if df[c].dtype == 'object':
@@ -152,21 +188,11 @@ def particle_bin_interval (df, particle_range):
         col_list = [x for x in cols if (float(x) < particle_range[b+1]) & (float(x) >= particle_range[b])]
         each_df = df.loc[:, col_list] # this datafram contains within the particle size b to b+1
         bin_df[str(particle_range[b])+'-'+str(particle_range[b+1]) ] = each_df.sum(axis=1)
-    print(bin_df)
-    quit()
-
-
-
-
-
-
-
-
 
     return bin_df
 
 
-def isc_xlsx (file_name, bin_size):
+def isc_xlsx (file_name, depth_bin_size, particle_range):
     '''
     this function read in processed ISC data and,
     return as organised data
@@ -182,15 +208,15 @@ def isc_xlsx (file_name, bin_size):
     # 2. reformaing dataframe with given depth_bin_size interval
     max_depth = ctd_df['Depths (m)'].max()
 
-    ctd_df = depth_bin_interval (ctd_df, bin_size, max_depth)
-    vol_spec_df = depth_bin_interval (vol_spec_df, bin_size, max_depth)
-    aggr_con_df = depth_bin_interval (aggr_con_df, bin_size, max_depth)
-    size_spec_df = depth_bin_interval (size_spec_df, bin_size, max_depth)
+    ctd_df.loc[ctd_df['Fluorescence (mg/m3)'] < 0, 'Fluorescence (mg/m3)'] = 0
+    ctd_df = depth_bin_interval (ctd_df, depth_bin_size, max_depth)
+    vol_spec_df = depth_bin_interval (vol_spec_df, depth_bin_size, max_depth)
+    aggr_con_df = depth_bin_interval (aggr_con_df, depth_bin_size, max_depth)
+    size_spec_df = depth_bin_interval (size_spec_df, depth_bin_size, max_depth)
 
     # 3. reforming dataframe with given paritcle size range
-    particle_range = [150, 500, 1000, 100000]
     vol_spec_df = particle_bin_interval (vol_spec_df, particle_range)
-
+    aggr_con_df = particle_bin_interval (aggr_con_df, particle_range)
 
     return ctd_df, vol_spec_df, aggr_con_df, size_spec_df
 
@@ -199,5 +225,6 @@ def isc_xlsx (file_name, bin_size):
 if __name__ == "__main__":
     file_path = '/Users/dong/Library/Mobile Documents/com~apple~CloudDocs/Work/github/OCEANpy'
     for excel_file in glob.glob(file_path+os.sep+'data'+os.sep+'isc'+os.sep+'IR*.xlsx'):
-        ctd_df, vol_spec_df, aggr_con_df, size_spec_df = isc_xlsx(excel_file, 10)
-        vertical_plot(ctd_df, vol_spec_df, excel_file.split(os.sep)[-1].replace('.xlsx', ''))
+        particle_range = [150, 500, 1000, 100000]
+        ctd_df, vol_spec_df, aggr_con_df, size_spec_df = isc_xlsx(excel_file, 10, particle_range)
+        vertical_plot(ctd_df, vol_spec_df, aggr_con_df, excel_file.split(os.sep)[-1].replace('.xlsx', ''), particle_range)
