@@ -22,8 +22,6 @@ def import_sql (database_name,table_name, df, replace_or_append):
 
 
 if __name__ == "__main__":
-
-
     # CTD to sql
     Tk().withdraw()
     print('choose project directory')

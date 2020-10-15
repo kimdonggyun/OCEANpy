@@ -1,6 +1,6 @@
 # create maps
 from sql_func import export_sql, import_sql
-from isc_prcs_func import isc_xlsx
+from ISC import isc_xlsx
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.basemap import maskoceans
 # brew install geos
@@ -158,51 +158,70 @@ def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec, value_ar
 
 
     # create plot and add data
-    plt.figure(figsize=(10, 8))
+    plt.figure(figsize=(8, 4))
     #cntr = plt.imshow(z_value, aspect='auto', origin='lower', cmap ='jet', extent=[np.min(geo_range), np.max(geo_range), np.min(topo_range), 0 ]) # same but other method to contour
     cntr = plt.contourf(geo_mesh,depth_mesh, z_value, levels=1000, cmap = 'jet')
 
-    #plt.scatter(list(value_ary[:,1]), list(value_ary[:,3]), c = list(value_ary[:,2]), s=10, cmap='jet')
+    #plt.scatter(list(value_ary[:,1]), list(value_ary[:,3]), s=0.5, c='black')
     plt.fill_between(geo_range, topo_range, np.min(topo_range)-100, color='black') # fill topology
     
     # addtional for plot
     plt.xlim(*range_transec)
-    plt.ylim(np.min(depth_mesh)-50, 0)
+    plt.ylim(np.min(depth_mesh), 0)
     plt.xlabel('degree $^\circ$')
     plt.ylabel('depth [m]')
     cbar = plt.colorbar(cntr, ticks = range(math.floor(np.nanmin(z_value)), math.ceil(np.nanmax(z_value)), 1)) # draw colorbar
-    cbar.ax.set_ylabel('Temp [dC]', rotation=270, labelpad=10)  # Fluorescence [mg m$^{-3}$]
+    cbar.ax.set_ylabel('Press [dbar]', rotation=270, labelpad=10)  # Fluorescence [mg m$^{-3}$] / Temp [dC] / Salinity [PSU]
     plt.title('PS107')
 
     # save plot
     path_to_save = '/Users/dong/Library/Mobile Documents/com~apple~CloudDocs/Work/github/OCEANpy/plots'
-    file_name = 'day = temp_'+lat_or_lon+'_contour_ver_'+ str(value_of_transec) +str(range_transec)+'.png'
+    file_name = 'press_'+lat_or_lon+'_contour_ver_'+ str(value_of_transec) +str(range_transec)+'.png'
 
     plt.savefig(os.path.join(path_to_save, file_name))    
 
 
-
-
-def contour_hor ():
+def TS_diagram (TSD_dict):
+    # plot Temp and Salinity diagram to see the water mass characters
+    plt.figure(figsize=(8, 4))
+    plt.scatter(TSD_dict['sal'], TSD_dict['temp'], c=TSD_dict['depth'], cmap = 'jet')
+    plt.xlim(25, 37)
+    plt.ylim(-3, 9)
+    plt.show()
+    plt.close()
     pass
 
 
 if __name__ == "__main__":
+        # create TS diagram
+        ctd_df = export_sql('ctd', 'ctd_meta')
+        station_list = ['PS107_18']
+        ctd_df = ctd_df.loc[ctd_df['Event'].str.contains('|'.join(station_list))]
+        depth = tuple(pd.to_numeric(ctd_df['Depth water [m]']))
+        sal = tuple(pd.to_numeric(ctd_df['Sal']))
+        temp = tuple(pd.to_numeric(ctd_df['Temp [°C]']))
+        TSD_dict = {'temp': temp, 'sal': sal, 'depth':depth}
+        TS_diagram(TSD_dict)
+
+        quit()
 
         # create contour map
-        ctd_df = export_sql('ctd', 'ctd_meta')
-        ctd_df_filter = ctd_df.loc[(pd.to_numeric(ctd_df['Latitude']) >=78.9) & (pd.to_numeric(ctd_df['Latitude']) <=79.1)]
-        ctd_df_filter = ctd_df.loc[(pd.to_numeric(ctd_df['Depth water [m]']) <=500)]
+        ctd_df = export_sql('ctd', 'ctd_meta'); print(list(ctd_df))
+        station_list = ['PS107_10', 'PS107_12', 'PS107_14', 'PS107_16', 'PS107_18']
+        cols_to_use = ['Latitude', 'Longitude', 'Depth water [m]', 'Press [dbar]']
+        ctd_df_filter = ctd_df.loc[ctd_df['Event'].str.contains('|'.join(station_list))] # select by station
+        #ctd_df_filter = ctd_df_filter[cols_to_use] # select only necessary columns
+        ctd_df_filter = ctd_df.loc[(pd.to_numeric(ctd_df['Latitude']) >=78.9) & (pd.to_numeric(ctd_df['Latitude']) <=79.1)] # select by lat and lon
+        ctd_df_filter = ctd_df_filter.loc[(pd.to_numeric(ctd_df_filter['Depth water [m]']) <=1000)]
         ctd_df_filter = ctd_df_filter.dropna() # drop rows having empty value (empty values will affect contouring method)
 
         ctd_df_filter['d_n'] = ctd_df_filter.apply(lambda row: day_night(float(row['Latitude']), float(row['Longitude']), datetime.strptime(row['Date/Time'], '%Y-%m-%dT%H:%M')), axis=1 )
         ctd_df_filter = ctd_df_filter.loc[ctd_df_filter['d_n'] == 'day']
 
-        print(list(ctd_df))
         depth = [i*(-1) for i in list(pd.to_numeric(ctd_df_filter['Depth water [m]']).values)]
         lat = list(pd.to_numeric(ctd_df_filter['Latitude']).values)
         lon = list(pd.to_numeric(ctd_df_filter['Longitude']).values)
-        z = list(pd.to_numeric(ctd_df_filter['Temp [°C]']).values)
+        z = list(pd.to_numeric(ctd_df_filter['Press [dbar]']).values)
 
         ctd_array = np.array((lat, lon, z, depth)).transpose() # create array
 
@@ -244,7 +263,7 @@ if __name__ == "__main__":
         for excel_file in glob.glob(file_path+os.sep+'data'+os.sep+'IR*.xlsx'):
             print(excel_file)
             profile_num = re.findall('[0-9]+', Path(excel_file).name)[0]
-            c_df = isc_prcs(excel_file)
+            c_df = isc_xlsx(excel_file)
             for station, item in station_dict.items():
                 if True in np.isnan(item): # ignore if nan value in item(lat, lon, profile number)
                     continue
