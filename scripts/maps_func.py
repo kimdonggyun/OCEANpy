@@ -183,20 +183,30 @@ def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec, value_ar
 
 def TS_diagram (TSD_dict):
     # plot Temp and Salinity diagram to see the water mass characters
-    plt.figure(figsize=(8, 4))
-    plt.scatter(TSD_dict['sal'], TSD_dict['temp'], c=TSD_dict['depth'], cmap = 'jet')
-    plt.xlim(25, 37)
-    plt.ylim(-3, 9)
+    plt.figure(figsize=(5, 5))
+    sc = plt.scatter(TSD_dict['sal'], TSD_dict['temp'], c=TSD_dict['depth'], cmap = 'jet_r', s=1)
+    
+    # additional plot detail
+    plt.xlim(30, 37)
+    plt.ylim(-2, 8)
+    plt.title('TS diagram')
+    plt.xlabel('Salinity [PSU]')
+    plt.ylabel('Temperature [dC]')
+
+    cbar = plt.colorbar(sc)
+    cbar.ax.set_ylabel('Depth [m]', rotation=270, labelpad=10)
+
     plt.show()
     plt.close()
-    pass
 
 
 if __name__ == "__main__":
+    
         # create TS diagram
         ctd_df = export_sql('ctd', 'ctd_meta')
-        station_list = ['PS107_18']
-        ctd_df = ctd_df.loc[ctd_df['Event'].str.contains('|'.join(station_list))]
+        #station_list = ['PS107_18']
+        #ctd_df = ctd_df.loc[ctd_df['Event'].str.contains('|'.join(station_list))]
+        ctd_df = ctd_df.loc[pd.to_numeric(ctd_df['Depth water [m]']) <=1000]
         depth = tuple(pd.to_numeric(ctd_df['Depth water [m]']))
         sal = tuple(pd.to_numeric(ctd_df['Sal']))
         temp = tuple(pd.to_numeric(ctd_df['Temp [°C]']))
