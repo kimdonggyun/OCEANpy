@@ -1,7 +1,7 @@
 ## sql definition to import and export data
 
 import psycopg2 as pgsql
-import pandas.io.sql as sql
+import pandas as pd
 import sqlalchemy, os, glob
 from tkinter.filedialog import askdirectory
 from tkinter import Tk
@@ -11,7 +11,7 @@ def export_sql(database_name, table_name):
     # export table from sql
     mydb = pgsql.connect(dbname='%s'%(database_name,), host='localhost', user='dong', password='Lava10203!')
     cur = mydb.cursor()
-    df = sql.read_sql('''SELECT * FROM %s'''%(table_name), mydb)
+    df = pd.read_sql('''SELECT * FROM %s'''%(table_name), mydb)
     return df
 
 def import_sql (database_name,table_name, df, replace_or_append):
