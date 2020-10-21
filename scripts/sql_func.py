@@ -2,9 +2,7 @@
 
 import psycopg2 as pgsql
 import pandas as pd
-import sqlalchemy, os, glob
-from tkinter.filedialog import askopenfilename
-from tkinter import Tk
+import sqlalchemy, os
 from CTD_func import raw_ctd_to_df
 
 def export_sql(database_name, table_name):
