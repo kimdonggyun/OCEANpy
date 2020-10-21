@@ -7,40 +7,29 @@ from tkinter.filedialog import askopenfilename
 from tkinter import Tk
 from CTD_func import raw_ctd_to_df
 
-def export_sql(database_name, table_name, location):
+def export_sql(database_name, table_name):
     # export table from sql
-    if location == 'personal':
-        mydb = pgsql.connect(dbname='%s'%(database_name,), host='localhost', user='dong', password='Lava10203!')
-    elif location == 'awi_loki':
-        mydb = pgsql.connect(dbname='%s'%(database_name,), host='localhost', user='dong', password='Lava10203!')
-    elif location == 'awi':
-        mydb = pgsql.connect(dbname='%s'%(database_name,), host='localhost', user='dong', password='Lava10203!')
-      
+    mydb = pgsql.connect(dbname='%s'%(database_name,), host='localhost', user='dong', password='Lava10203!')
     cur = mydb.cursor()
     df = pd.read_sql('''SELECT * FROM %s'''%(table_name), mydb)
     return df
 
-def import_sql (database_name,table_name, df, replace_or_append, location):
+def import_sql (database_name,table_name, df, replace_or_append):
     # create new table or insert on database and import the data
-    if location == 'personal':
-        engine = sqlalchemy.create_engine('postgresql+psycopg2://dong:Lava10203!@localhost/%s' %(database_name,), paramstyle='format')
-        df.to_sql('%s' % (table_name,), engine, if_exists=replace_or_append, index=False, 
-                dtype={col_name: sqlalchemy.types.String() for col_name in df})
-    elif location == 'awi':
-        engine = sqlalchemy.create_engine('postgresql+psycopg2://dong:Lava10203!@localhost/%s' %(database_name,), paramstyle='format')
-        df.to_sql('%s' % (table_name,), engine, if_exists=replace_or_append, index=False, 
-                dtype={col_name: sqlalchemy.types.String() for col_name in df})
+    engine = sqlalchemy.create_engine('postgresql+psycopg2://dong:Lava10203!@localhost/%s' %(database_name,), paramstyle='format')
+    df.to_sql('%s' % (table_name,), engine, if_exists=replace_or_append, index=False, 
+            dtype={col_name: sqlalchemy.types.String() for col_name in df})
     
 
 
 if __name__ == "__main__":
     action = 'export'
     if action == 'export':
-        df = export_sql('loki', 'loki_meta', 'awi')
+        df = export_sql('loki', 'loki_meta')
         print(df)
       
     elif action == 'import':
         filepath = os.path.expanduser('~/Git/OCEANpy/data/loki/LOKI_station.xlsx')
         df = pd.read_excel(filepath)
         # df = raw_ctd_to_df(filepath) # processing for raw ctd file
-        import_sql('loki', 'loki_meta', df, 'replace', 'awi') # import 
+        import_sql('loki', 'loki_meta', df, 'replace')
