@@ -3,13 +3,16 @@
 import psycopg2 as pgsql
 import pandas as pd
 import sqlalchemy, os, glob
-from tkinter.filedialog import askdirectory
+from tkinter.filedialog import askopenfilename
 from tkinter import Tk
 from CTD_func import raw_ctd_to_df
 
-def export_sql(database_name, table_name):
+def export_sql(database_name, table_name, location):
     # export table from sql
-    mydb = pgsql.connect(dbname='%s'%(database_name,), host='localhost', user='dong', password='Lava10203!')
+    if location == 'personal':
+      mydb = pgsql.connect(dbname='%s'%(database_name,), host='localhost', user='dong', password='Lava10203!')
+    elif location == 'awi_loki':
+      mydb = pgsql.connect(dbname='%s'%(database_name,), host='localhost', user='dong', password='Lava10203!')
     cur = mydb.cursor()
     df = pd.read_sql('''SELECT * FROM %s'''%(table_name), mydb)
     return df
@@ -22,11 +25,14 @@ def import_sql (database_name,table_name, df, replace_or_append):
 
 
 if __name__ == "__main__":
-    # CTD to sql
-    Tk().withdraw()
-    print('choose project directory')
-    path_to_data = askdirectory()
+    action = 'export'
+    if action == 'export':
+      df = export_sql('ctd', 'ctd_meta', 'personal')
+      
+    elif action == 'import':  
+      Tk().withdraw() # browser to choose the file
+      print('choose file to import')
+      path_to_data = askopenfilename()
 
-    for file_path in glob.glob(path_to_data+os.sep+'CTD*.tsv'):
-        df = raw_ctd_to_df(file_path)
-        import_sql('ctd', 'ctd_meta', df, 'replace')
+      df = raw_ctd_to_df(file_path) # processing for raw ctd file
+      import_sql('ctd', 'ctd_meta', df, 'replace') # import 
