@@ -6,7 +6,7 @@ Created by : Dong-gyun KIM
 Contact : kdk921219@gmail.com
 Creation date : 02.07.2020
 '''
-from gui_func import *
+from loki_gui import date_time_gui
 from pathlib import Path
 from tkinter import Tk
 from tkinter.filedialog import askdirectory, askopenfilename
