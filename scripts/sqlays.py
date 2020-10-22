@@ -10,7 +10,7 @@ def export_sql(database_name, table_name, location):
     if location == 'local':
         mydb = pgsql.connect(dbname='%s'%(database_name,), host='localhost', user='dong', password='Lava10203!')
     elif location == 'awi_server':
-        mydb = pgsql.connect(dbname='%s'%(database_name,), host='10.2.101.71', user='loki', password='DwnmdN!')
+        mydb = pgsql.connect(dbname='%s'%(database_name,), host='postgres5.awi.de', user='loki', password='DwnmdN!')
     cur = mydb.cursor()
     df = pd.read_sql('''SELECT * FROM %s'''%(table_name), mydb)
     return df
