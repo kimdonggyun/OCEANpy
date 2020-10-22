@@ -3,11 +3,14 @@
 import psycopg2 as pgsql
 import pandas as pd
 import sqlalchemy, os
-from CTD_func import raw_ctd_to_df
+from ctdays import raw_ctd_to_df
 
-def export_sql(database_name, table_name):
+def export_sql(database_name, table_name, location):
     # export table from sql
-    mydb = pgsql.connect(dbname='%s'%(database_name,), host='localhost', user='dong', password='Lava10203!')
+    if location == 'local':
+        mydb = pgsql.connect(dbname='%s'%(database_name,), host='localhost', user='dong', password='Lava10203!')
+    elif location == 'awi_server':
+        mydb = pgsql.connect(dbname='%s'%(database_name,), host='10.2.101.71', user='loki', password='DwnmdN!')
     cur = mydb.cursor()
     df = pd.read_sql('''SELECT * FROM %s'''%(table_name), mydb)
     return df
@@ -23,7 +26,7 @@ def import_sql (database_name,table_name, df, replace_or_append):
 if __name__ == "__main__":
     action = 'export'
     if action == 'export':
-        df = export_sql('loki', 'loki_meta')
+        df = export_sql('loki', 'cruise', 'awi_server')
         print(df)
       
     elif action == 'import':
