@@ -135,15 +135,3 @@ def day_night(latitude, longitude, dt):
         return 'dusk'
     else:
         return 'night'
-
-    
-
-
-if __name__ == "__main__":
-    position = "79°01.884'N"
-    
-    time_list = ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23']
-    for i in time_list:
-        print(i)
-        print(day_night(-82, 130, datetime.datetime.strptime('2018-12-21 %s:00:00'% (i,)   , '%Y-%m-%d %H:%M:%S'  )))
-    

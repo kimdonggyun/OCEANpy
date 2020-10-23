@@ -1,6 +1,6 @@
 # create maps
-from sql_func import export_sql, import_sql
-from ISC import isc_xlsx
+from sqlays import export_sql, import_sql
+from iscays import isc_xlsx
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.basemap import maskoceans
 # brew install geos
@@ -16,7 +16,7 @@ from scipy.interpolate import griddata
 import scipy.ndimage
 import matplotlib.tri as tri
 import math
-from time_info import day_night
+from timeinfo import day_night
 from datetime import datetime
 
 def station_map (dict_cruise_pos, topo_ary):
@@ -198,84 +198,3 @@ def TS_diagram (TSD_dict):
 
     plt.show()
     plt.close()
-
-
-if __name__ == "__main__":
-    
-        # create TS diagram
-        ctd_df = export_sql('ctd', 'ctd_meta')
-        #station_list = ['PS107_18']
-        #ctd_df = ctd_df.loc[ctd_df['Event'].str.contains('|'.join(station_list))]
-        ctd_df = ctd_df.loc[pd.to_numeric(ctd_df['Depth water [m]']) <=1000]
-        depth = tuple(pd.to_numeric(ctd_df['Depth water [m]']))
-        sal = tuple(pd.to_numeric(ctd_df['Sal']))
-        temp = tuple(pd.to_numeric(ctd_df['Temp [°C]']))
-        TSD_dict = {'temp': temp, 'sal': sal, 'depth':depth}
-        TS_diagram(TSD_dict)
-
-        quit()
-
-        # create contour map
-        ctd_df = export_sql('ctd', 'ctd_meta'); print(list(ctd_df))
-        station_list = ['PS107_10', 'PS107_12', 'PS107_14', 'PS107_16', 'PS107_18']
-        cols_to_use = ['Latitude', 'Longitude', 'Depth water [m]', 'Press [dbar]']
-        ctd_df_filter = ctd_df.loc[ctd_df['Event'].str.contains('|'.join(station_list))] # select by station
-        #ctd_df_filter = ctd_df_filter[cols_to_use] # select only necessary columns
-        ctd_df_filter = ctd_df.loc[(pd.to_numeric(ctd_df['Latitude']) >=78.9) & (pd.to_numeric(ctd_df['Latitude']) <=79.1)] # select by lat and lon
-        ctd_df_filter = ctd_df_filter.loc[(pd.to_numeric(ctd_df_filter['Depth water [m]']) <=1000)]
-        ctd_df_filter = ctd_df_filter.dropna() # drop rows having empty value (empty values will affect contouring method)
-
-        ctd_df_filter['d_n'] = ctd_df_filter.apply(lambda row: day_night(float(row['Latitude']), float(row['Longitude']), datetime.strptime(row['Date/Time'], '%Y-%m-%dT%H:%M')), axis=1 )
-        ctd_df_filter = ctd_df_filter.loc[ctd_df_filter['d_n'] == 'day']
-
-        depth = [i*(-1) for i in list(pd.to_numeric(ctd_df_filter['Depth water [m]']).values)]
-        lat = list(pd.to_numeric(ctd_df_filter['Latitude']).values)
-        lon = list(pd.to_numeric(ctd_df_filter['Longitude']).values)
-        z = list(pd.to_numeric(ctd_df_filter['Press [dbar]']).values)
-
-        ctd_array = np.array((lat, lon, z, depth)).transpose() # create array
-
-        topo = bathy_data (75, 83, -30, 20)
-        contour_ver(topo, 'lat', 79, (-5, 10), ctd_array)
-        #contour_ver(topo, 'lon', 79, (-5, 10), ctd_array)
-        quit()
-
-        # create station maps
-        isc_df = export_sql('isc', 'isc_meta')
-        cruise_list = ('PS107', 'PS114', 'PS121')
-        cruise_dict = {}
-        for cruise in cruise_list:
-            cruise_df = isc_df[isc_df['cruise_station_haul'].str.contains(cruise)]
-            cruise_dict[cruise] = (tuple(pd.to_numeric(cruise_df['lat'])) , tuple(pd.to_numeric(cruise_df['lon'])))
-
-        topo = bathy_data (75, 83, -30, 20) # -30, 30, 75, 85
-        station_map(cruise_dict, topo)
-        
-        quit()
-
-
-        # create contour plot of cross section
-        station_dict = {}
-        '''
-        station_dict = {'cruise_station_haul': (lat, lon, profile_number)}
-        '''
-        for index, row in cruise_df.iterrows():
-            if row['cruise_station_haul'] not in station_dict:
-                station_dict[row['cruise_station_haul']] = (row['lat'], row['lon'], row['profile_number'])
-            else:
-                pass
-        
-        contour_dict = {}
-        '''
-        contour_dict = {(lat, lon): (depth, parameter)}
-        '''
-        file_path = '/Users/dong/Library/Mobile Documents/com~apple~CloudDocs/Work/github/ISCpy'
-        for excel_file in glob.glob(file_path+os.sep+'data'+os.sep+'IR*.xlsx'):
-            print(excel_file)
-            profile_num = re.findall('[0-9]+', Path(excel_file).name)[0]
-            c_df = isc_xlsx(excel_file)
-            for station, item in station_dict.items():
-                if True in np.isnan(item): # ignore if nan value in item(lat, lon, profile number)
-                    continue
-                elif (int(item[2]) == int(profile_num)):
-                    contour_dict[(item[0], item[1])] = tuple(c_df['Depths (m)']), tuple(c_df['Temperature (dC)']) 

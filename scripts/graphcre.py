@@ -4,7 +4,6 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from matplotlib import dates as mdates
 from matplotlib.ticker import FormatStrFormatter
-from meta_from_eco_to_tsv_func import *
 import numpy as np
 import pandas as pd
 from pathlib import Path
