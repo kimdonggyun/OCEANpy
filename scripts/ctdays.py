@@ -21,13 +21,4 @@ def raw_ctd_to_df (file_path):
     return df
 
 
-if __name__ == "__main__":
-
-    Tk().withdraw()
-    print('choose project directory')
-    path_to_data = askdirectory()
-
-    for file_path in glob.glob(path_to_data+os.sep+'CTD*.tsv'):
-        raw_ctd_to_df(file_path)
-
     

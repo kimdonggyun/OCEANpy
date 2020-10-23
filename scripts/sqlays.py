@@ -26,17 +26,3 @@ def import_sql (database_name,table_name, df, replace_or_append):
     df.to_sql('%s' % (table_name,), engine, if_exists=replace_or_append, index=False, 
             dtype={col_name: sqlalchemy.types.String() for col_name in df})
     
-
-
-if __name__ == "__main__":
-    action = 'export'
-    if action == 'export':
-        edit = ['ps107'] # cruise name (in list, case insensitive) for AWI server and table name for local
-        df = export_sql('loki', edit, 'awi_server')
-        print(df)
-      
-    elif action == 'import':
-        filepath = os.path.expanduser('~/Git/OCEANpy/data/loki/LOKI_station.xlsx')
-        df = pd.read_excel(filepath)
-        # df = raw_ctd_to_df(filepath) # processing for raw ctd file
-        import_sql('loki', 'loki_meta', df, 'replace')

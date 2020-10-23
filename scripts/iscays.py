@@ -219,12 +219,3 @@ def isc_xlsx (file_name, depth_bin_size, particle_range):
     aggr_con_df = particle_bin_interval (aggr_con_df, particle_range)
 
     return ctd_df, vol_spec_df, aggr_con_df, size_spec_df
-
-
-
-if __name__ == "__main__":
-    file_path = '/Users/dong/Library/Mobile Documents/com~apple~CloudDocs/Work/github/OCEANpy'
-    for excel_file in glob.glob(file_path+os.sep+'data'+os.sep+'isc'+os.sep+'IR*.xlsx'):
-        particle_range = [150, 500, 1000, 100000]
-        ctd_df, vol_spec_df, aggr_con_df, size_spec_df = isc_xlsx(excel_file, 10, particle_range)
-        vertical_plot(ctd_df, vol_spec_df, aggr_con_df, excel_file.split(os.sep)[-1].replace('.xlsx', ''), particle_range)
