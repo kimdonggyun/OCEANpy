@@ -59,7 +59,14 @@ def vertical_plot (ctd_df, vol_spec_df, aggr_con_df, title, particle_range):
     abd_med = tuple(aggr_con_df[str(particle_range[1])+'-'+str(particle_range[2])])
     abd_lrg = tuple(aggr_con_df[str(particle_range[2])+'-'+str(particle_range[3])])
     abd_tol = tuple(np.array(abd_sml) + np.array(abd_med) + np.array(abd_lrg))
-
+    vol_sml, vol_med, vol_lrg, vol_tol, abd_sml, abd_lrg, abd_tol
+    
+    vol = {'vol_sml':vol_sml, 'vol_med':vol_med, 'vol_lrg':vol_lrg, 'vol_tol':vol_tol}
+    abd = {'abd_sml':abd_sml, 'abd_med':abd_med, 'abd_lrg':abd_lrg, 'abd_tol':abd_tol}
+    ctd = {'depth':depth, 'temp':temp, 'sal':sal, 'turb':turb, 'fluo':fluo}
+    
+    return vol, abd, ctd, ctd_dict
+    '''
     ##########
     # plotting 
     fig, axs = plt.subplots(2,3, figsize = (8, 10))
@@ -142,6 +149,7 @@ def vertical_plot (ctd_df, vol_spec_df, aggr_con_df, title, particle_range):
     fig_name = str('abd_vol_'+title+'.png')
     plt.savefig(fig_name)
     plt.close()
+    '''
 
 def depth_bin_interval (df, depth_bin_size, max_depth):
     # reforming dataframe with certain depth interval
