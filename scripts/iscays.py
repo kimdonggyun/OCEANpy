@@ -34,7 +34,7 @@ def sum_up (df, list_size_spectra, min_size, max_size):
     return loc_number
 
 
-def vertical_plot (ctd_df, vol_spec_df, aggr_con_df, title, particle_range):
+def isc_summary (ctd_df, vol_spec_df, aggr_con_df, particle_range):
     # plot for ISC and CTD
 
     # data preparation
@@ -45,7 +45,7 @@ def vertical_plot (ctd_df, vol_spec_df, aggr_con_df, title, particle_range):
     turb = tuple(ctd_df['Turbidity (NTU)'])
     fluo = tuple(ctd_df['Fluorescence (mg/m3)'])
 
-    ctd_dict = {'depth': 'Depths (m)', 'temp': 'Temperature (dC)', 'sal': 'Salinity (PSU)', 'turb': 'Turbidity (NTU)',
+    ctd_label = {'depth': 'Depths (m)', 'temp': 'Temperature (dC)', 'sal': 'Salinity (PSU)', 'turb': 'Turbidity (NTU)',
                     'fluo': 'Fluorescence (mg/m3)'}
 
     # particle volume data
@@ -65,91 +65,8 @@ def vertical_plot (ctd_df, vol_spec_df, aggr_con_df, title, particle_range):
     abd = {'abd_sml':abd_sml, 'abd_med':abd_med, 'abd_lrg':abd_lrg, 'abd_tol':abd_tol}
     ctd = {'depth':depth, 'temp':temp, 'sal':sal, 'turb':turb, 'fluo':fluo}
     
-    return vol, abd, ctd, ctd_dict
-    '''
-    ##########
-    # plotting 
-    fig, axs = plt.subplots(2,3, figsize = (8, 10))
-    axs = axs.ravel()
+    return vol, abd, ctd, ctd_label
 
-    # 1st plot for temperature and salanity / data from ISC CTD
-    axs[0].plot(temp, depth, color='red', linewidth= 1, alpha=0.7)
-    axs[0].set_ylabel(ctd_dict['depth'], color ='black')
-    axs[0].set_xlabel(ctd_dict['temp'], color = 'red')
-    axs[0].set_xlim(-3, 9)
-    axs[0].set_ylim(0,1000)
-    axs[0].invert_yaxis()
-
-
-    sec_axs = axs[0].twiny()
-    sec_axs.plot(sal, depth, color ='blue', linewidth= 1, alpha=0.7)
-    sec_axs.set_xlabel(ctd_dict['sal'], color = 'blue')
-    sec_axs.set_xlim(30, 36)
-
-    # 2nd plot for turbidity and Fluorescence / data from ISC CTD
-    axs[3].plot(turb, depth, color='red', linewidth= 1, alpha=0.7)
-    axs[3].set_ylabel(ctd_dict['depth'], color ='black')
-    axs[3].set_xlabel(ctd_dict['turb'], color = 'red')
-    axs[3].set_xlim(-0.5, 6)
-    axs[3].set_ylim(0,1000)
-    axs[3].invert_yaxis()
-
-
-    sec_axs = axs[3].twiny()
-    sec_axs.plot(fluo, depth, color ='blue', linewidth= 1, alpha=0.7)
-    sec_axs.set_xlabel(ctd_dict['fluo'], color = 'blue')
-    sec_axs.set_xlim(-0.5, 6)
-
-    # 3rd plot for Total Aggregate Volume and Aggregate abundance
-    axs[1].plot(vol_sml, depth, color='red', linewidth= 1, alpha=0.7)
-    axs[1].set_xlabel('vol 0.15-0.5 [mm]', color = 'red')
-    axs[1].set_ylim(0,1000)
-    axs[1].invert_yaxis()
-
-    sec_axs = axs[1].twiny()
-    sec_axs.plot(vol_med, depth, color ='blue', linewidth= 1, alpha=0.7)
-    sec_axs.set_xlabel('vol 0.5-1 [mm]', color = 'blue')
-
-    # 4th plot for vol_median ESD and Average ESD
-    axs[4].plot(vol_lrg, depth, color='red', linewidth= 1, alpha=0.7)
-    axs[4].set_xlabel('vol 1 [mm] > ', color = 'red')
-    axs[4].set_ylim(0,1000)
-    axs[4].invert_yaxis()
-
-    sec_axs = axs[4].twiny()
-    sec_axs.plot(vol_tol, depth, color ='blue', linewidth= 1, alpha=0.7)
-    sec_axs.set_xlabel('vol total (0.15 [mm] > )', color = 'blue')
-
-    # 5th plot for Total Aggregate Volume and Aggregate abundance
-    axs[2].plot(abd_sml, depth, color='red', linewidth= 1, alpha=0.7)
-    axs[2].set_xlabel('abd 0.15-0.5 [mm]', color = 'red')
-    axs[2].set_ylim(0,1000)
-    axs[2].invert_yaxis()
-
-    sec_axs = axs[2].twiny()
-    sec_axs.plot(abd_med, depth, color ='blue', linewidth= 1, alpha=0.7)
-    sec_axs.set_xlabel('abd 0.5-1 [mm]', color = 'blue')
-
-    # 6th plot for vol_median ESD and Average ESD
-    axs[5].plot(abd_lrg, depth, color='red', linewidth= 1, alpha=0.7)
-    axs[5].set_xlabel('abd 1 [mm] > ', color = 'red')
-    axs[5].set_ylim(0,1000)
-    axs[5].invert_yaxis()
-
-    sec_axs = axs[5].twiny()
-    sec_axs.plot(abd_tol, depth, color ='blue', linewidth= 1, alpha=0.7)
-    sec_axs.set_xlabel('abd total (0.15 [mm] > )', color = 'blue')
-
-
-    # addtional plot modification
-    fig.tight_layout(pad=3, h_pad=1, w_pad=1) # adjust layout of subplots
-    plt.suptitle(title, y = 0.99) # main title
-
-    os.chdir('/Users/dong/Library/Mobile Documents/com~apple~CloudDocs/Work/github/OCEANpy/plots')
-    fig_name = str('abd_vol_'+title+'.png')
-    plt.savefig(fig_name)
-    plt.close()
-    '''
 
 def depth_bin_interval (df, depth_bin_size, max_depth):
     # reforming dataframe with certain depth interval

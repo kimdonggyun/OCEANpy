@@ -28,7 +28,7 @@ def export_sql(database_name, edit, location):
                         FROM vessel v, cruise c, station s, loki_data l, taxa_group t 
                         WHERE c.id_vessel = v.id_vessel AND c.id_cruise = s.id_cruise 
                         AND s.id_station = l.id_station AND l.id_taxa_group = t.id_taxa_group
-                        AND c.name ILIKE ANY ( ARRAY %s ) '''%(edit,), mydb)
+                        AND c.name ILIKE ANY ( ARRAY %s ) ORDER BY s.name, l.loki_depth  '''%(edit,), mydb)
     return df
 
 def import_sql (database_name,table_name, df, replace_or_append):
