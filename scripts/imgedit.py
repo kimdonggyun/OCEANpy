@@ -72,15 +72,3 @@ def img_values (img, contours, obj_index, binary):
     gray_mean = np.mean(masked_img) # unmasked(False=background) will be ignored and masked(Ture=object) will only be considered
 
     return moments, pixel_area, gray_mean
-
-if __name__ == "__main__":
-    Tk().withdraw()
-    proj_dir = askdirectory()
-    for bmp_file in glob.glob(str(proj_dir+os.sep+'*.bmp')):
-        img, contours, obj_index, binary = find_contour(bmp_file)
-        print(bmp_file.split(os.sep)[-1] , img_values(img, contours, obj_index, binary)[1], img_values(img, contours, obj_index, binary)[2])
-
-        #enhanced_img = enhance_contrast(bmp_file)
-        #cv2.imwrite(os.path.join(png_dir_path ,bmp_file.split(os.sep)[-1]) ,enhanced_img)
-
-    

@@ -196,5 +196,4 @@ def TS_diagram (TSD_dict):
     cbar = plt.colorbar(sc)
     cbar.ax.set_ylabel('Depth [m]', rotation=270, labelpad=10)
 
-    plt.show()
-    plt.close()
+    return plt
