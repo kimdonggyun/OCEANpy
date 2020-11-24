@@ -117,20 +117,37 @@ def particle_bin_interval (df, particle_range):
     return bin_df
 
 
-def isc_xlsx (file_name, depth_bin_size, particle_range):
+def read_isc (file_name, processed_or_raw):
     '''
-    this function read in processed ISC data and,
-    return as organised data
+    reads in processed ISC data
     '''
+    
     # 1. import xlsx file and seperate each sheets to seperate dataframe
     xl_file = pd.ExcelFile(file_name)
+    
+    if processed_or_raw == 'raw':
+        ctd_df = pd.read_excel(xl_file, sheet_name='CTD-Data', header=2)
+        vol_spec_df = pd.read_excel(xl_file, sheet_name='VolumeSpectraData', header=2)
+        aggr_con_df = pd.read_excel(xl_file, sheet_name='AggregateConcentration', header=2)
+        size_spec_df = pd.read_excel(xl_file, sheet_name='SizeSpectraData', header=2)
+    elif processed_or_raw == 'processed':
+        ctd_df = pd.read_excel(xl_file, sheet_name='CTD-Data10', header=2)
+        vol_spec_df = pd.read_excel(xl_file, sheet_name='VolumeSpectraData10', header=2)
+        aggr_con_df = pd.read_excel(xl_file, sheet_name='AggregateConcentration10', header=2)
+        size_spec_df = pd.read_excel(xl_file, sheet_name='SizeSpectraData10', header=2)
+        
+    
+    return ctd_df, vol_spec_df, aggr_con_df, size_spec_df
 
-    ctd_df = pd.read_excel(xl_file, sheet_name='CTD-Data', header=2)
-    vol_spec_df = pd.read_excel(xl_file, sheet_name='VolumeSpectraData', header=2)
-    aggr_con_df = pd.read_excel(xl_file, sheet_name='AggregateConcentration', header=2)
-    size_spec_df = pd.read_excel(xl_file, sheet_name='SizeSpectraData', header=2)
 
-    # 2. reformaing dataframe with given depth_bin_size interval
+def isc_xlsx (file_name, depth_bin_size, particle_range, processed_or_raw):
+    '''
+    return as organised data
+    '''
+    
+    ctd_df, vol_spec_df, aggr_con_df, size_spec_df = read_isc (filename, processed_or_raw)
+    
+    # 1. reformaing dataframe with given depth_bin_size interval
     max_depth = ctd_df['Depths (m)'].max()
 
     ctd_df.loc[ctd_df['Fluorescence (mg/m3)'] < 0, 'Fluorescence (mg/m3)'] = 0
@@ -139,7 +156,7 @@ def isc_xlsx (file_name, depth_bin_size, particle_range):
     aggr_con_df = depth_bin_interval (aggr_con_df, depth_bin_size, max_depth)
     size_spec_df = depth_bin_interval (size_spec_df, depth_bin_size, max_depth)
 
-    # 3. reforming dataframe with given paritcle size range
+    # 2. reforming dataframe with given paritcle size range
     vol_spec_df = particle_bin_interval (vol_spec_df, particle_range)
     aggr_con_df = particle_bin_interval (aggr_con_df, particle_range)
 
