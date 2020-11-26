@@ -89,14 +89,14 @@ def bathy_data (minlat, maxlat, minlon, maxlon):
     '''
     import io, csv, json
     import urllib.request as urllib2
-    response = urllib2.urlopen('http://coastwatch.pfeg.noaa.gov/erddap/griddap/usgsCeSrtm30v6.json?topo[(' \
-                            +str(maxlat)+'):100:('+str(minlat)+')][('+str(minlon)+'):100:('+str(maxlon)+')]')
+    url = 'https://coastwatch.pfeg.noaa.gov/erddap/griddap/srtm30plus_LonPM180.json?z[(%s):100:(%s)][(%s):100:(%s)]'%(minlat, maxlat, minlon, maxlon)
+    response = urllib2.urlopen(url) 
     data = response.read()
     data_dic = json.loads(data.decode('utf-8'))
     topo = np.asarray(data_dic['table']['rows'])
     return topo
 
-def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec, value_ary):
+def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec, value_ary, show_save):
     '''
     create contour plot with bathymetry data
     should type the paramter like this; contour_ver(topo, 'lat', 79, (-10, 10))
@@ -173,12 +173,16 @@ def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec, value_ar
     cbar = plt.colorbar(cntr, ticks = range(math.floor(np.nanmin(z_value)), math.ceil(np.nanmax(z_value)), 1)) # draw colorbar
     cbar.ax.set_ylabel('Press [dbar]', rotation=270, labelpad=10)  # Fluorescence [mg m$^{-3}$] / Temp [dC] / Salinity [PSU]
     plt.title('PS107')
-
-    # save plot
-    path_to_save = '/Users/dong/Library/Mobile Documents/com~apple~CloudDocs/Work/github/OCEANpy/plots'
-    file_name = 'press_'+lat_or_lon+'_contour_ver_'+ str(value_of_transec) +str(range_transec)+'.png'
-
-    plt.savefig(os.path.join(path_to_save, file_name))    
+    
+    if show_save == 'show':
+        plt.show()
+        plt.close()
+        
+    elif show_save == 'save':
+        # save plot
+        path_to_save = '/home/bios1/dkim/Git/OCEANpy/plots'
+        file_name = 'press_'+lat_or_lon+'_contour_ver_'+ str(value_of_transec) +str(range_transec)+'.png'
+        plt.savefig(os.path.join(path_to_save, file_name))    
 
 
 def TS_diagram (TSD_dict):
