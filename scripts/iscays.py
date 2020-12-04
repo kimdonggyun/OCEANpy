@@ -113,7 +113,9 @@ def particle_bin_interval (df, particle_range):
         col_list = [x for x in cols if (float(x) < particle_range[b+1]) & (float(x) >= particle_range[b])]
         each_df = df.loc[:, col_list] # this datafram contains within the particle size b to b+1
         bin_df[str(particle_range[b])+'-'+str(particle_range[b+1]) ] = each_df.sum(axis=1)
-
+    
+    bin_df['total']= bin_df.iloc[:, 1:].sum(axis=1)
+    
     return bin_df
 
 
@@ -145,7 +147,7 @@ def isc_xlsx (file_name, depth_bin_size, particle_range, processed_or_raw):
     return as organised data
     '''
     
-    ctd_df, vol_spec_df, aggr_con_df, size_spec_df = read_isc (filename, processed_or_raw)
+    ctd_df, vol_spec_df, aggr_con_df, size_spec_df = read_isc (file_name, processed_or_raw)
     
     # 1. reformaing dataframe with given depth_bin_size interval
     max_depth = ctd_df['Depths (m)'].max()

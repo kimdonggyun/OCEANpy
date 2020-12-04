@@ -96,7 +96,7 @@ def bathy_data (minlat, maxlat, minlon, maxlon):
     topo = np.asarray(data_dic['table']['rows'])
     return topo
 
-def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec, value_ary, z_label):
+def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec, value_ary, show_save):
     '''
     create contour plot with bathymetry data
     should type the paramter like this; contour_ver(topo, 'lat', 79, (-10, 10))
@@ -118,9 +118,18 @@ def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec, value_ar
         geo_range = lon_transec[(lon_transec >= range_transec[0]-0.5) & (lon_transec <= range_transec[1]+0.5)] # set precise lon range
         topo_range = topo_transec[(lon_transec >= range_transec[0]-0.5) & (lon_transec <= range_transec[1]+0.5)] # set precise topo range
 
+
         # for contour
-        fig, ax = plt.subplots(figsize=(11,5))
-        cntr = ax.tricontourf(value_ary[:,1], value_ary[:,3], value_ary[:,2], 30, cmap='jet')
+        '''
+        geo_mesh, depth_mesh = np.meshgrid( np.linspace(np.min(geo_range), np.max(geo_range), int((np.max(geo_range)- np.min(geo_range))*10) ),
+                                            np.linspace(np.min(topo_range), 0, int(np.abs(np.min(topo_range))) ) ) # creat mesh grid of x(position) and y(depth)
+
+        z_value = griddata((value_ary[:,1], value_ary[:,3]), value_ary[:,2] , (geo_mesh, depth_mesh), method='linear')
+        removenan = np.isnan(z_value) # remove nan vlaue in z value and apply this to x and y parameter
+        geo_mesh = np.ma.masked_array(geo_mesh, removenan)
+        depth_mesh = np.ma.masked_array(depth_mesh, removenan)
+        z_value = np.ma.masked_array(z_value, removenan)
+        '''
 
     elif lat_or_lon == 'lon':
         x = topo_ary[:,0] # lat
@@ -138,24 +147,42 @@ def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec, value_ar
         geo_range = lat_transec[(lat_transec >= range_transec[0]-0.5) & (lat_transec <= range_transec[1]+0.5)] # set precise lon range
         topo_range = topo_transec[(lat_transec >= range_transec[0]-0.5) & (lat_transec <= range_transec[1]+0.5)] # set precise topo range
 
+
         # for contour
-        fig, ax = plt.subplots(figsize=(18,8))
-        cntr = ax.tricontourf(value_ary[:,0], value_ary[:,3], value_ary[:,2], 30, cmap='jet')
+        geo_mesh, depth_mesh = np.meshgrid( np.linspace(np.min(geo_range), np.max(geo_range), int((np.max(geo_range)- np.min(geo_range))*10) ),
+                                            np.linspace(np.min(topo_range), 0, int(np.abs(np.min(topo_range))) ) ) # creat mesh grid of x(position) and y(depth)
+
+        z_value = griddata((value_ary[:,1], value_ary[:,3]), value_ary[:,2] , (geo_mesh, depth_mesh), method='linear')
+
 
     # create plot and add data
-    ax.fill_between(geo_range, topo_range, np.min(topo_range)-100, color='black') # fill topology
+    plt.figure(figsize=(8, 4))
+    cntr = plt.tricontourf(value_ary[:,1], value_ary[:,3], value_ary[:,2], 20, cmap='jet')
+    #cntr = plt.imshow(z_value, aspect='auto', origin='lower', cmap ='jet', extent=[np.min(geo_range), np.max(geo_range), np.min(topo_range), 0 ]) # same but other method to contour
+    #cntr = plt.contourf(geo_mesh,depth_mesh, z_value, levels=1000, cmap = 'jet')
+
+    #plt.scatter(list(value_ary[:,1]), list(value_ary[:,3]), s=0.5, c='black')
+    plt.fill_between(geo_range, topo_range, np.min(topo_range)-100, color='black') # fill topology
     
     # addtional for plot
-    ax.set_xlim(*range_transec)
-    ax.set_ylim(np.min(value_ary[:,3]), 0)
-    ax.set_xlabel('degree $^\circ$')
-    ax.set_ylabel('depth [m]')
-    cbar = fig.colorbar(cntr, ticks = range( math.floor(np.nanmin(value_ary[:,2])), math.ceil(np.nanmax(value_ary[:,2])),
-                                            math.ceil(abs(math.floor(np.nanmin(value_ary[:,2]))-math.ceil(np.nanmax(value_ary[:,2])))/10)) )
-
-    cbar.ax.set_ylabel(z_label, rotation=90, labelpad=10)  # Fluorescence [mg m$^{-3}$] / Temp [dC] / Salinity [PSU] / Press [dbar]
+    plt.xlim(*range_transec)
+    plt.ylim(np.min(value_ary[:,3]), 0)
+    #plt.xlabel('degree $^\circ$')
+    #plt.ylabel('depth [m]')
+    cbar = plt.colorbar(cntr, ticks = range(math.floor(np.nanmin(value_ary[:,2])), math.ceil(np.nanmax(value_ary[:,2])), math.ceil(abs(math.floor(np.nanmin(value_ary[:,2]))-math.ceil(np.nanmax(value_ary[:,2])))/10)  ))
     
-    return ax
+    #cbar = plt.colorbar(cntr, ticks = range(math.floor(np.nanmin(z_value)), math.ceil(np.nanmax(z_value)), math.ceil(abs(math.floor(np.nanmin(z_value))-math.ceil(np.nanmax(z_value)))/10)  )) # draw colorbar
+    #cbar.ax.set_ylabel('z_value', rotation=270, labelpad=10)  # Fluorescence [mg m$^{-3}$] / Temp [dC] / Salinity [PSU] / Press [dbar]
+    
+    if show_save == 'show':
+        plt.show()
+        plt.close()
+        
+    elif show_save == 'save':
+        # save plot
+        path_to_save = '/home/bios1/dkim/Git/OCEANpy/plots'
+        file_name = 'press_'+lat_or_lon+'_contour_ver_'+ str(value_of_transec) +str(range_transec)+'.png'
+        plt.savefig(os.path.join(path_to_save, file_name))    
 
 
 def TS_diagram (TSD_dict):
