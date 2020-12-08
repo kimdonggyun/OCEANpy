@@ -19,7 +19,7 @@ import math
 from timeinfo import day_night
 from datetime import datetime
 
-def station_map (dict_cruise_pos, topo_ary):
+def station_map (dict_cruise_pos, topo_ary, lat_min, lat_max, lon_min, lon_max, label_color):
     '''
     create maps showing the location of stations
     the form of dictionary should be like below:
@@ -27,8 +27,9 @@ def station_map (dict_cruise_pos, topo_ary):
     '''
     #################################################################################
     # 1. create map
-    m = Basemap(projection='merc', lat_0 = 79, lon_0 = 0, resolution = 'h',
-            llcrnrlon = -30, llcrnrlat = 75, urcrnrlon = 20, urcrnrlat = 83)
+    fig, ax = plt.subplots(figsize=(10,10))
+    m = Basemap(projection='merc', lat_0 = (lat_min+lat_max)/2, lon_0 = (lon_min+lon_max)/2, resolution = 'h',
+            llcrnrlon = lon_min, llcrnrlat = lat_min, urcrnrlon = lon_max, urcrnrlat = lat_max, ax=ax)
     m.drawcoastlines()
     m.drawcountries()
     m.etopo()
@@ -38,8 +39,8 @@ def station_map (dict_cruise_pos, topo_ary):
 
     #################################################################################
     # 2. draw lat/lon grid lines every 5 degrees. labels = [left, right, top, bottom]
-    m.drawmeridians(np.arange(-30, 30, 10.), labels=[0,1,0,1], fontsize=10) # line for longitude
-    m.drawparallels(np.arange(75, 90, 2.), labels=[1,0,1,0], fontsize=10) # line for latitude
+    m.drawmeridians(np.arange(lon_min, lon_max, math.ceil(abs((lon_max-lon_min)/3))), labels=[0,1,0,1], fontsize=10) # line for longitude
+    m.drawparallels(np.arange(lat_min, lat_max, math.ceil(abs((lat_max-lat_min)/3))), labels=[1,0,1,0], fontsize=10) # line for latitude
 
     #################################################################################
     # 3. draw the contour of bathymetry
@@ -62,25 +63,17 @@ def station_map (dict_cruise_pos, topo_ary):
     #################################################################################
     # 4. locate the station on the map
     # get the data frame from SQL server and drop the duplication filtered by station name
-    color_list = ['yellow', 'red', 'green']; c = 0
+    color_list = label_color; c = 0
     for cruise, pos in dict_cruise_pos.items():
         lat_list = pos[0]
         lon_list = pos[1]
         lons_m, lats_m = m(lon_list,lat_list)
         m.scatter(lons_m,lats_m, marker='o', s=15, label=cruise, color=color_list[c], edgecolors='black')
         c += 1
-    plt.legend(loc='upper right')
+    ax.legend(loc='upper right')
 
     ################################################################################
-    # 5. Add figure detail
-    plt.title('ISC stations')
-
-
-    # save the plot
-    os.chdir('/Users/dong/Library/Mobile Documents/com~apple~CloudDocs/Work/github/OCEANpy/plots')
-    fig_name = "ISC_station_map.pdf"
-    plt.savefig(fig_name)
-    plt.close()
+    return ax, m
 
 def bathy_data (minlat, maxlat, minlon, maxlon):
     '''
