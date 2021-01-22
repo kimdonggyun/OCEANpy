@@ -89,6 +89,8 @@ def bathy_data (minlat, maxlat, minlon, maxlon):
     topo = np.asarray(data_dic['table']['rows'])
     return topo
 
+
+
 def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec, value_ary, z_label):
     '''
     create contour plot with bathymetry data
@@ -134,7 +136,9 @@ def contour_ver (topo_ary, lat_or_lon, value_of_transec, range_transec, value_ar
         # for contour
         fig, ax = plt.subplots(figsize=(18,8))
         cntr = ax.tricontourf(value_ary[:,0], value_ary[:,3], value_ary[:,2], 30, cmap='jet')
-
+    
+    
+    
     # create plot and add data
     ax.fill_between(geo_range, topo_range, np.min(topo_range)-100, color='black') # fill topology
     
