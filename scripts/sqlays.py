@@ -9,12 +9,15 @@ def export_sql(database_name, edit, location):
     # export table from sql
     # cruise name (in list, case insensitive) for AWI server, 
     # table name for local
-    if location == 'local':
+    if location == 'local': # from local
         mydb = pgsql.connect(dbname='%s'%(database_name,), host='localhost', user='dong', password='Lava10203!')
         cur = mydb.cursor()
         df = pd.read_sql('''SELECT * FROM %s'''%(edit), mydb)
-    elif (location == 'awi_server') & (edit != 'all'):
-        mydb = pgsql.connect(dbname='%s'%(database_name,), host='postgres5.awi.de', user='loki', password='DwnmdN!')
+    
+    ###########################
+    ##### LOKI data Export ####
+    elif (location == 'awi_server') & (edit != 'all') & (database_name == 'loki'): # loki edit
+        mydb = pgsql.connect(dbname='loki', host='postgres5.awi.de', user='loki', password='DwnmdN!')
         cur = mydb.cursor()
         
         df = pd.read_sql('''SELECT v.name as vessel, c.name as cruise, 
@@ -30,8 +33,8 @@ def export_sql(database_name, edit, location):
                         AND s.id_station = l.id_station AND l.id_taxa_group = t.id_taxa_group
                         AND c.name ILIKE ANY ( ARRAY %s ) ORDER BY s.name, l.loki_depth  '''%(edit,), mydb)
         
-    elif (location == 'awi_server') & (edit == 'all'):
-        mydb = pgsql.connect(dbname='%s'%(database_name,), host='postgres5.awi.de', user='loki', password='DwnmdN!')
+    elif (location == 'awi_server') & (edit == 'all') & (database_name == 'loki'): # loki all
+        mydb = pgsql.connect(dbname='loki', host='postgres5.awi.de', user='loki', password='DwnmdN!')
         cur = mydb.cursor()
         
         df = pd.read_sql('''SELECT v.name as vessel, c.name as cruise, 
@@ -46,6 +49,46 @@ def export_sql(database_name, edit, location):
                         WHERE c.id_vessel = v.id_vessel AND c.id_cruise = s.id_cruise 
                         AND s.id_station = l.id_station AND l.id_taxa_group = t.id_taxa_group
                         ORDER BY s.name, l.loki_depth  ''', mydb)
+        
+    ###############################
+    ##### MultiNet data Export ####      
+    elif (location == 'awi_server') & (edit != 'all') & (database_name == 'mn'): # loki edit
+        mydb = pgsql.connect(dbname='loki', host='postgres5.awi.de', user='loki', password='DwnmdN!')
+        cur = mydb.cursor()
+        
+        df = pd.read_sql('''SELECT v.name as vessel, c.name as cruise, 
+                        s.name as station, s.region as region, s.latitude as latitude, s.longitude as longitude, s.bottom_depth as bottom_depth,
+                        m.datetime as date_time,
+                        m.depth_min as depth_min, m.depth_max as depth_max, m.manual_classification as manual_classification, m.developmental_stage as developmental_stage,
+                        m.individuals_cub_m as individuals_cub_m, m.individuals_sqr_m as individuals_sqr_m,
+                        t.animal as animal, t.copepod as copepod, t.phylum as phylum, t.class as class, t.spec_order as spec_order,
+                        t.family as family, t.genus as genus, t.species as species
+                        FROM vessel v, cruise c, station s, mn_data m, taxa_group t 
+                        WHERE c.id_vessel = v.id_vessel AND c.id_cruise = s.id_cruise 
+                        AND s.id_station = m.id_station AND m.id_taxa_group = t.id_taxa_group
+                        AND c.name ILIKE ANY ( ARRAY %s ) ORDER BY s.name, m.depth_max  '''%(edit,), mydb)
+        
+    elif (location == 'awi_server') & (edit == 'all') & (database_name == 'mn'): # loki all
+        mydb = pgsql.connect(dbname='loki', host='postgres5.awi.de', user='loki', password='DwnmdN!')
+        cur = mydb.cursor()
+        
+        df = pd.read_sql('''SELECT v.name as vessel, c.name as cruise, 
+                        s.name as station, s.region as region, s.latitude as latitude, s.longitude as longitude, s.bottom_depth as bottom_depth,
+                        m.datetime as date_time,
+                        m.depth_min as depth_min, m.depth_max as depth_max, m.manual_classification as manual_classification, m.developmental_stage as developmental_stage,
+                        m.individuals_cub_m as individuals_cub_m, m.individuals_sqr_m as individuals_sqr_m,
+                        t.animal as animal, t.copepod as copepod, t.phylum as phylum, t.class as class, t.spec_order as spec_order,
+                        t.family as family, t.genus as genus, t.species as species
+                        FROM vessel v, cruise c, station s, mn_data m, taxa_group t 
+                        WHERE c.id_vessel = v.id_vessel AND c.id_cruise = s.id_cruise 
+                        AND s.id_station = m.id_station AND m.id_taxa_group = t.id_taxa_group
+                        ORDER BY s.name, m.depth_max  ''', mydb)
+        
+        
+        
+        
+        
+        
     return df
 
 def import_sql (database_name,table_name, df, replace_or_append):
