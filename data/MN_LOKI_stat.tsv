@@ -1,8 +1,8 @@
 	slope	intercept	r_value	p_value	std_err
-metridia CI-III	0.012	0.624	0.173	0.465	0.016
-metridia >CIV	1.42	-0.342	0.907	0.0	0.156
+metridia	0.491	0.662	0.817	0.0	0.082
 calanus CI-III	0.072	0.023	0.92	0.0	0.007
-calanus >CIV	0.579	3.18	0.761	0.0	0.116
+calanus >CIV	0.337	7.676	0.457	0.043	0.155
+calanus	0.228	9.586	0.627	0.003	0.067
 ostracoda	0.11	0.161	0.466	0.038	0.049
 chaetognatha	0.169	0.474	0.444	0.05	0.08
 microcalanus	0.016	1.895	0.346	0.135	0.01
