@@ -23,12 +23,26 @@ def calDist (x1, y1, x2, y2):
 def calOxyconsume (DW, Temp):
     # calculate oxygen consumption rate
     # DW: dry weight of individual taxa
-    # Temperature
+    # Temperature in Celsius 
     oxycon = math.e**(-0.399 + 0.801*math.log(DW) + 0.069*math.log(Temp))
     return oxycon
 
-def calOxycomsume2Carbon ():
+def calOxycomsume2Carbon (R, RQ):
+    # calculate carbon ingestion and egestion rate
+    # R : In situ respiration rate (ul O2 / (ind*day))
+    # RQ : Respiration Quitient
+    # C : Carbon mass per Mole Volume (12g / 22.4L)
+    # U : Average digestive efficiency
+    # K : Gross growth efficiency
     
-    return carbon
+    C = 12/22.4
+    U = 0.7
+    K = 0.3
+    
+    carbon_ingestion = R*C*RQ*( 1/(U-K) )
+    carbon_egestion = carbon_ingestion*0.3
+    
+    
+    return carbon_ingestion, carbon_egestion
     
     
