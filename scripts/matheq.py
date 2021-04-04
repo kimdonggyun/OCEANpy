@@ -27,7 +27,7 @@ def calOxyconsume (DW, Temp):
     oxycon = math.e**(-0.399 + 0.801*math.log(DW) + 0.069*math.log(Temp))
     return oxycon
 
-def calOxycomsume2Carbon (R, RQ):
+def calOxycomsume2Carbon (DW, Temp, RQ):
     # calculate carbon ingestion and egestion rate (µg C / (ind*Day))
     # R : In situ respiration rate (µl O2 / (Ind*Day))
     # RQ : Respiration Quitient (Carb;1 Protein;0.97 Fat;0.73)
@@ -38,6 +38,8 @@ def calOxycomsume2Carbon (R, RQ):
     C = 12/22.4
     U = 0.7
     K = 0.3
+
+    R = calOxyconsume(DW, Temp)*24
     
     carbon_ingestion = R*C*RQ*( 1/(U-K) )
     carbon_egestion = carbon_ingestion*0.3
