@@ -10,7 +10,7 @@ def export_sql(database_name, edit, location):
     # cruise name (in list, case insensitive) for AWI server, 
     # table name for local
     if location == 'local': # from local
-        mydb = pgsql.connect(dbname='%s'%(database_name,), host='localhost', user='dong', password='Lava10203!')
+        mydb = pgsql.connect(dbname='%s'%(database_name,), host='localhost', user='dddong', password='Lava10203!')
         cur = mydb.cursor()
         df = pd.read_sql('''SELECT * FROM %s'''%(edit), mydb)
     
@@ -84,14 +84,10 @@ def export_sql(database_name, edit, location):
                         AND s.id_station = m.id_station AND m.id_taxa_group = t.id_taxa_group
                         ORDER BY s.name, m.depth_max  ''', mydb)
         
-        
-        
-        
-        
-        
+         
     return df
 
-def import_sql (database_name,table_name, df, replace_or_append):
+def import_sql (database_name, table_name, df, replace_or_append):
     # create new table or insert on database and import the data
     engine = sqlalchemy.create_engine('postgresql+psycopg2://dong:Lava10203!@localhost/%s' %(database_name,), paramstyle='format')
     df.to_sql('%s' % (table_name,), engine, if_exists=replace_or_append, index=False, 
